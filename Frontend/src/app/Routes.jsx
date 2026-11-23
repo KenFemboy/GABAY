@@ -1,44 +1,35 @@
 import { Navigate, Route, Routes as ReactRoutes } from 'react-router-dom'
 
+import ProtectedRoute from '../auth/ProtectedRoute'
+import { ROLES } from '../auth/roles'
+import ChangePasswordPage from '../features/auth/ChangePasswordPage'
+import LoginPage from '../features/auth/LoginPage'
+import DashboardPage from '../features/dashboard/DashboardPage'
+import UsersPage from '../features/users/UsersPage'
 import AuthLayout from '../layouts/AuthLayout'
 import DashboardLayout from '../layouts/DashboardLayout'
-
-function Login() {
-  return (
-    <section className="mx-auto max-w-md rounded-xl bg-white p-8 shadow">
-      <h1 className="text-2xl font-bold text-slate-900">Sign in to GABAY</h1>
-      <p className="mt-2 text-slate-600">Authentication will be connected in a later stage.</p>
-      <button className="mt-6 w-full rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white" type="button">
-        Continue as placeholder
-      </button>
-    </section>
-  )
-}
-
-function Dashboard() {
-  return (
-    <div>
-      <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-      <p className="mt-2 text-slate-600">Your GABAY workspace is ready.</p>
-    </div>
-  )
-}
-
-function NotFound() {
-  return <p className="text-center text-slate-600">The page you requested was not found.</p>
-}
+import NotFoundPage from '../shared/components/NotFoundPage'
 
 export default function Routes() {
   return (
     <ReactRoutes>
       <Route element={<AuthLayout />} path="/login">
-        <Route index element={<Login />} />
+        <Route element={<LoginPage />} index />
       </Route>
-      <Route element={<DashboardLayout />} path="/dashboard">
-        <Route index element={<Dashboard />} />
+
+      <Route element={<ProtectedRoute />}>
+        <Route element={<DashboardLayout />}>
+          <Route element={<DashboardPage />} path="/dashboard" />
+          <Route element={<ChangePasswordPage />} path="/account/password" />
+
+          <Route element={<ProtectedRoute roles={[ROLES.SYSTEM_ADMIN]} />}>
+            <Route element={<UsersPage />} path="/admin/users" />
+          </Route>
+        </Route>
       </Route>
+
       <Route element={<Navigate replace to="/dashboard" />} path="/" />
-      <Route element={<NotFound />} path="*" />
+      <Route element={<NotFoundPage />} path="*" />
     </ReactRoutes>
   )
 }

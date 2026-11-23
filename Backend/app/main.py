@@ -1,12 +1,14 @@
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.config import get_settings
+from app.core.errors import APIError
 from app.db.session import engine
+from app.routers import auth, users
 
 settings = get_settings()
 app = FastAPI(title=settings.app_name, version=settings.app_version)
@@ -20,23 +22,44 @@ app.add_middleware(
 )
 
 
-def error_response(code: str, message: str, status_code: int) -> JSONResponse:
-    return JSONResponse(
-        status_code=status_code,
-        content={"error": {"code": code, "message": message}},
-    )
+def error_response(
+    code: str,
+    message: str,
+    status_code: int,
+    *,
+    details: list[dict] | None = None,
+    headers: dict[str, str] | None = None,
+) -> JSONResponse:
+    error: dict = {"code": code, "message": message}
+    if details:
+        error["details"] = details
+    return JSONResponse(status_code=status_code, content={"error": error}, headers=headers)
+
+
+@app.exception_handler(APIError)
+async def api_error_handler(request: Request, exc: APIError) -> JSONResponse:
+    return error_response(exc.code, exc.message, exc.status_code, headers=exc.headers)
 
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
-    return error_response("http_error", str(exc.detail), exc.status_code)
+    return error_response("http_error", str(exc.detail), exc.status_code, headers=exc.headers)
 
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
-    return error_response("validation_error", "The request data is invalid.", 422)
+    details = []
+    for err in exc.errors():
+        loc = [str(part) for part in err.get("loc", ()) if part not in ("body", "query", "path")]
+        message = str(err.get("msg", "Invalid value.")).removeprefix("Value error, ")
+        details.append({"field": ".".join(loc), "message": message})
+    return error_response("validation_error", "The request data is invalid.", 422, details=details)
+
+
+app.include_router(auth.router)
+app.include_router(users.router)
 
 
 @app.get("/api/health")
@@ -44,7 +67,7 @@ def health() -> dict:
     try:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
-    except SQLAlchemyError as exc:
+    except SQLAlchemyError:
         return {
             "status": "degraded",
             "database": "unavailable",
