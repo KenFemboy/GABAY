@@ -61,3 +61,13 @@ def require_roles(*roles: Role) -> Callable[..., User]:
 
 
 require_admin = require_roles(Role.SYSTEM_ADMIN)
+
+# Learner records. Row-level visibility (Teachers see only assigned learners) is
+# enforced in app.services.learner_service.get_visible_learner.
+require_learner_readers = require_roles(Role.SNED_COORDINATOR, Role.SCHOOL_HEAD, Role.TEACHER)
+require_learner_editors = require_roles(Role.SNED_COORDINATOR)
+
+# Assessments: Teachers may write only for learners they can see (checked in
+# the service via get_visible_learner). Removing documents is Coordinator-only.
+require_assessment_writers = require_roles(Role.SNED_COORDINATOR, Role.TEACHER)
+require_document_deleters = require_roles(Role.SNED_COORDINATOR)

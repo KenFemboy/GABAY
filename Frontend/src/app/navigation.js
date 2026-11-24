@@ -1,4 +1,5 @@
 import { ALL_ROLES, ROLES } from '../auth/roles'
+import { LEARNER_READER_ROLES } from '../features/learners/constants'
 
 /**
  * Sidebar entries. Each later stage adds its module here with the roles that
@@ -6,5 +7,6 @@ import { ALL_ROLES, ROLES } from '../auth/roles'
  */
 export const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', roles: ALL_ROLES },
+  { to: '/learners', label: 'Learners', roles: LEARNER_READER_ROLES },
   { to: '/admin/users', label: 'Users', roles: [ROLES.SYSTEM_ADMIN] },
 ]

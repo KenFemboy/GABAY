@@ -60,6 +60,42 @@ def create_access_token(user_id: int, token_version: int) -> tuple[str, int]:
     return token, expires_in
 
 
+def create_file_token(
+    key: str, content_type: str, filename: str, download: bool, expires_in: int
+) -> str:
+    """Short-lived token for a local-storage signed URL (never a sign-in token)."""
+    settings = get_settings()
+    now = datetime.now(UTC)
+    payload: dict[str, Any] = {
+        "type": "file",
+        "key": key,
+        "ct": content_type,
+        "fn": filename,
+        "dl": download,
+        "iat": now,
+        "exp": now + timedelta(seconds=expires_in),
+    }
+    return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+
+def decode_file_token(token: str) -> dict[str, Any]:
+    settings = get_settings()
+    try:
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret_key,
+            algorithms=[settings.jwt_algorithm],
+            options={"require": ["key", "exp", "iat", "type"]},
+        )
+    except jwt.ExpiredSignatureError as exc:
+        raise TokenError("token_expired") from exc
+    except jwt.PyJWTError as exc:
+        raise TokenError("invalid_token") from exc
+    if payload.get("type") != "file":
+        raise TokenError("invalid_token")
+    return payload
+
+
 def decode_access_token(token: str) -> dict[str, Any]:
     settings = get_settings()
     try:

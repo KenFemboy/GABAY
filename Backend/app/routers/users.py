@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.errors import not_found
-from app.core.permissions import require_admin
+from app.core.permissions import require_admin, require_roles
 from app.db.session import get_db
 from app.models.user import Role, User, UserStatus
-from app.schemas.user import UserCreate, UserList, UserRead, UserUpdate
-from app.services import user_service
+from app.schemas.user import UserBrief, UserCreate, UserList, UserRead, UserUpdate
+from app.services import learner_service, user_service
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -25,6 +25,15 @@ def list_users(
         db, search=search, role=role, status=status_filter, offset=offset, limit=limit
     )
     return UserList(items=[UserRead.model_validate(u) for u in items], total=total)
+
+
+@router.get("/teachers", response_model=list[UserBrief])
+def list_teachers(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles(Role.SNED_COORDINATOR, Role.SYSTEM_ADMIN)),
+) -> list[User]:
+    """Active Teachers (id and name only), for assigning learners."""
+    return learner_service.list_assignable_teachers(db)
 
 
 @router.post("", response_model=UserRead, status_code=status.HTTP_201_CREATED)

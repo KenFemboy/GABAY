@@ -5,6 +5,9 @@ import { ROLES } from '../auth/roles'
 import ChangePasswordPage from '../features/auth/ChangePasswordPage'
 import LoginPage from '../features/auth/LoginPage'
 import DashboardPage from '../features/dashboard/DashboardPage'
+import { LEARNER_READER_ROLES } from '../features/learners/constants'
+import LearnerProfilePage from '../features/learners/LearnerProfilePage'
+import LearnersPage from '../features/learners/LearnersPage'
 import UsersPage from '../features/users/UsersPage'
 import AuthLayout from '../layouts/AuthLayout'
 import DashboardLayout from '../layouts/DashboardLayout'
@@ -21,6 +24,11 @@ export default function Routes() {
         <Route element={<DashboardLayout />}>
           <Route element={<DashboardPage />} path="/dashboard" />
           <Route element={<ChangePasswordPage />} path="/account/password" />
+
+          <Route element={<ProtectedRoute roles={LEARNER_READER_ROLES} />}>
+            <Route element={<LearnersPage />} path="/learners" />
+            <Route element={<LearnerProfilePage />} path="/learners/:learnerId" />
+          </Route>
 
           <Route element={<ProtectedRoute roles={[ROLES.SYSTEM_ADMIN]} />}>
             <Route element={<UsersPage />} path="/admin/users" />

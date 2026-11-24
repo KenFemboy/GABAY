@@ -1,0 +1,155 @@
+GABAY - Known limitations and follow-ups
+=========================================
+Stages 3 and 4. Written 2026-11-24.
+
+This file is a to-do list for later. Each item says what the limit is and, where there is one,
+what to do about it. Update the file when an item is fixed or a new limit is found.
+
+
+-------------------------------------------------------------------------------
+STAGE 3 - LEARNER RECORDS
+-------------------------------------------------------------------------------
+
+Not yet confirmed or checked
+- The learner fields were chosen during development and still need to be confirmed with the
+  SNED Coordinator. They are: learner_code, first/middle/last name, birth_date, sex,
+  grade_level, section, school_year, status.
+- The screens have not been clicked through in a browser for each role (Coordinator, Teacher,
+  School Head, System Admin). Only the automated tests have been run.
+
+Access rules (as designed; review them if school policy changes)
+- Teachers see a learner only while they are assigned to that learner for the learner's CURRENT
+  school_year. When a learner's school_year changes, the old teacher loses access until they are
+  assigned again for the new year, so assignments have to be redone every school year.
+- A Teacher who opens a learner they are not assigned to gets 404 (not found), not 403. This is
+  on purpose, so record IDs cannot be probed.
+- The System Administrator has no access to learner data at all.
+- Teachers cannot edit learner fields. Only the SNED Coordinator can.
+- Learners are never deleted. There is no DELETE endpoint; change the status instead (active,
+  transferred, graduated or inactive).
+- Deactivating a Teacher account does not remove their assignments. They cannot sign in, so they
+  cannot see anything, but the assignment rows stay.
+
+Validation limits
+- learner_code is a free-form school code: letters, digits and "-", up to 32 characters, stored
+  in upper case. It is NOT checked as a DepEd LRN.
+- school_year only has to look like "2025-2026" (the second year must be the first year + 1). Any
+  year range that fits this pattern is accepted, for example "1900-1901".
+- birth_date cannot be in the future and must be within the last 30 years. The 30-year check
+  compares years only.
+- The grade levels are a fixed list: K, 1-12 and NG (non-graded).
+- Sex can only be male or female.
+- The section filter on the learner list needs the exact section name (upper or lower case does
+  not matter). It does not match part of a name.
+
+Performance and scale
+- Learner search uses LIKE '%text%', which cannot use a database index. This is fine at school
+  size. For very large data, add a pg_trgm index or full-text search.
+- The teacher dropdown (GET /api/users/teachers) loads every active Teacher at once, with no
+  paging.
+
+Other
+- The frontend guesses the current school year by assuming it starts in June (see
+  currentSchoolYear in Frontend/src/features/learners/constants.js).
+- The seed script (python -m app.scripts.seed_learners) refuses to run only when ENVIRONMENT is
+  exactly "production". It creates fake learners only. Never load real learner data into
+  development.
+- A missing field now gives the message "This field is required." on EVERY endpoint, including
+  users, not only on learner endpoints.
+- AUDIT LOGGING IS NOT DONE YET (planned for Stage 14). Nothing records who viewed or edited a
+  learner. Add it in learner_service.get_visible_learner and learner_service.update_learner.
+
+
+-------------------------------------------------------------------------------
+STAGE 4 - ASSESSMENTS AND DOCUMENT UPLOAD
+-------------------------------------------------------------------------------
+
+Not yet confirmed or checked
+- Supabase Storage has only been tested against a MOCKED Supabase (tests/test_storage.py), never
+  against the real project. Before relying on it:
+    1. Create the private bucket "gabay-documents".
+    2. Set STORAGE_BACKEND=supabase, SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Backend/.env.
+    3. Upload a file and check that it appears under assessments/.
+    4. Check that preview (iframe) and download both work with the signed URL.
+    5. Check that the signed URL stops working after 60 seconds.
+- The screens (upload with progress bar, preview, download, remove) have not been clicked
+  through in a browser.
+
+Upload limits
+- FastAPI receives the WHOLE upload before GABAY's size check runs. Oversized files are rejected
+  and never stored, but the server still receives them. For production, also set a request size
+  limit on the reverse proxy (for example nginx client_max_body_size 16m) and the Supabase
+  bucket's file size limit.
+- Each upload is held in memory (up to MAX_UPLOAD_MB, default 15 MB) while it is checked.
+- The 15 MB limit is set in TWO places:
+    Backend:  MAX_UPLOAD_MB in .env (app/core/config.py)
+    Frontend: MAX_UPLOAD_MB in Frontend/src/features/assessments/constants.js
+  If you change one, change the other.
+- The file type check looks only at the first bytes of the file (the "magic bytes"). Any file
+  that starts with "%PDF-" passes as a PDF. Files are not virus-scanned and PDFs are not checked
+  further or cleaned. If needed later, add antivirus scanning (for example ClamAV) or PDF
+  sanitising.
+- Only PDF, JPG/JPEG and PNG are accepted. HEIC photos taken on phones, Word files and similar
+  are rejected.
+
+Duplicates
+- A duplicate is detected per learner, and only when the bytes are exactly the same (same
+  SHA-256). If the same paper is scanned again, the bytes differ and it is NOT treated as a
+  duplicate.
+- The same file can be uploaded for a different learner.
+
+Workflow limits
+- Each assessment has one document. To replace it, the Coordinator removes the current document
+  and then a new one is uploaded.
+- Only the SNED Coordinator can remove a document. A Teacher who uploaded the wrong file has to
+  ask the Coordinator.
+- Removing a document sets the assessment back to Draft. Documents of a Finalized assessment
+  cannot be removed.
+- So far, status only moves Draft -> Uploaded on upload and Uploaded -> Draft on remove. The
+  Processing, Processed, Needs Review and Finalized steps belong to later stages
+  (OCR/extraction).
+- Assessment details (type, date, assessor, notes) cannot be edited yet, and an assessment
+  record cannot be deleted.
+
+Signed URLs
+- Anyone who has a signed URL can open the file until it expires (SIGNED_URL_TTL_SECONDS,
+  default 60). A link can be used more than once until it expires.
+- Local storage: the token in the URL is the only permission, and the /api/files/{token} route
+  does not check who is signed in. The tokens are signed with JWT_SECRET_KEY, so changing that
+  key cancels any links that are still open.
+- PUBLIC_API_URL must be the address the BROWSER uses to reach the API. If it is wrong, local
+  preview and download links break.
+- Supabase: the download link adds ?download=<filename>. The iframe preview depends on Supabase
+  allowing its files to be shown inside a frame. Check this in step 4 of "Not yet confirmed"
+  above.
+
+Keeping the database and storage in step (rare edge cases)
+- Upload: if the database commit fails AND the cleanup delete in storage also fails, a stray file
+  is left in storage. It is logged as "Could not remove orphaned object ...".
+- Remove: if the storage delete succeeds but the final database commit then fails, the database
+  row still points to a file that no longer exists. This is very unlikely.
+- The database deletes a learner's assessments and documents automatically if the learner is
+  deleted (ON DELETE CASCADE), but that would leave their files in storage. Learners are never
+  deleted, so this should not happen. If learner deletion is ever added, delete the files from
+  storage first.
+
+Configuration and security
+- SUPABASE_SERVICE_ROLE_KEY bypasses all of Supabase's access rules (RLS). Keep it in
+  Backend/.env only. Never put it in Frontend/.env or commit it.
+- STORAGE_LOCAL_DIR defaults to the relative path "storage", which is resolved from the folder
+  the server is started in. Start uvicorn from Backend/, or set an absolute path.
+- The learner profile only counts assessments in its summary if app/services/assessment_service.py
+  has been imported. The API always imports it (through the assessments router), but a
+  standalone script may not.
+- AUDIT LOGGING IS NOT DONE YET (planned for Stage 14). Nothing records uploads, downloads or
+  removals. Add it in assessment_service: get_visible_assessment, upload_document,
+  delete_document and document_signed_url.
+
+
+-------------------------------------------------------------------------------
+GENERAL
+-------------------------------------------------------------------------------
+- Stages 3 and 4 have not been committed to git yet.
+- If the project folder is moved, the .venv command shortcuts (alembic.exe, uvicorn.exe and
+  others) break, because they still point to the old folder. Use "python -m alembic ...",
+  "python -m uvicorn ..." and so on, or delete and rebuild .venv.

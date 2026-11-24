@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -25,6 +26,25 @@ class Settings(BaseSettings):
         default=60, validation_alias="ACCESS_TOKEN_EXPIRE_MINUTES"
     )
 
+    # Document storage. "local" writes to disk (development/tests, no cloud keys
+    # needed); "supabase" uses a private Supabase Storage bucket.
+    storage_backend: Literal["local", "supabase"] = Field(
+        default="local", validation_alias="STORAGE_BACKEND"
+    )
+    storage_local_dir: str = Field(default="storage", validation_alias="STORAGE_LOCAL_DIR")
+    supabase_url: str = Field(default="", validation_alias="SUPABASE_URL")
+    # Secret: backend only, never sent to the frontend.
+    supabase_service_role_key: str = Field(
+        default="", validation_alias="SUPABASE_SERVICE_ROLE_KEY"
+    )
+    supabase_bucket: str = Field(default="gabay-documents", validation_alias="SUPABASE_BUCKET")
+    max_upload_mb: int = Field(default=15, ge=1, le=50, validation_alias="MAX_UPLOAD_MB")
+    signed_url_ttl_seconds: int = Field(
+        default=60, ge=10, le=3600, validation_alias="SIGNED_URL_TTL_SECONDS"
+    )
+    # Base URL of this API as the browser sees it; used for local-storage signed URLs.
+    public_api_url: str = Field(default="http://localhost:8000", validation_alias="PUBLIC_API_URL")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -39,7 +59,18 @@ class Settings(BaseSettings):
                     "JWT_SECRET_KEY must be set to a random value of at least 32 "
                     "characters outside development."
                 )
+        if self.storage_backend == "supabase" and not (
+            self.supabase_url and self.supabase_service_role_key
+        ):
+            raise ValueError(
+                "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required when "
+                "STORAGE_BACKEND=supabase."
+            )
         return self
+
+    @property
+    def max_upload_bytes(self) -> int:
+        return self.max_upload_mb * 1024 * 1024
 
 
 @lru_cache

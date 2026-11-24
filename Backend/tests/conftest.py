@@ -84,3 +84,13 @@ def login(client: TestClient) -> Callable[[User], dict[str, str]]:
         return {"Authorization": f"Bearer {response.json()['access_token']}"}
 
     return _login
+
+
+@pytest.fixture
+def storage(client: TestClient, tmp_path):
+    """Local-disk storage in a temp dir, injected into the app."""
+    from app.services.storage_service import LocalDiskStorage, get_storage
+
+    backend = LocalDiskStorage(tmp_path / "storage", "http://testserver")
+    app.dependency_overrides[get_storage] = lambda: backend
+    return backend

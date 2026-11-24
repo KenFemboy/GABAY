@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.core.config import get_settings
 from app.core.errors import APIError
 from app.db.session import engine
-from app.routers import auth, users
+from app.routers import assessments, auth, files, learners, users
 
 settings = get_settings()
 app = FastAPI(title=settings.app_name, version=settings.app_version)
@@ -53,13 +53,19 @@ async def validation_exception_handler(
     details = []
     for err in exc.errors():
         loc = [str(part) for part in err.get("loc", ()) if part not in ("body", "query", "path")]
-        message = str(err.get("msg", "Invalid value.")).removeprefix("Value error, ")
+        if err.get("type") == "missing":
+            message = "This field is required."
+        else:
+            message = str(err.get("msg", "Invalid value.")).removeprefix("Value error, ")
         details.append({"field": ".".join(loc), "message": message})
     return error_response("validation_error", "The request data is invalid.", 422, details=details)
 
 
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(learners.router)
+app.include_router(assessments.router)
+app.include_router(files.router)
 
 
 @app.get("/api/health")
@@ -90,4 +96,5 @@ def config_status() -> dict:
         "environment": settings.environment,
         "frontend_origin": settings.frontend_origin,
         "database_configured": bool(settings.database_url),
+        "storage_backend": settings.storage_backend,
     }

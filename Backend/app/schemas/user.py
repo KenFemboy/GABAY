@@ -4,6 +4,7 @@ from typing import Annotated
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
 from app.models.user import Role, UserStatus
+from app.schemas.common import strip_required
 
 PASSWORD_MIN_LENGTH = 10
 PASSWORD_MAX_LENGTH = 128
@@ -22,13 +23,6 @@ def validate_new_password(value: str) -> str:
         raise ValueError(f"Password must be at least {PASSWORD_MIN_LENGTH} characters.")
     if len(value) > PASSWORD_MAX_LENGTH:
         raise ValueError(f"Password must be at most {PASSWORD_MAX_LENGTH} characters.")
-    return value
-
-
-def strip_required(value: str) -> str:
-    value = value.strip()
-    if not value:
-        raise ValueError("This field is required.")
     return value
 
 
@@ -66,6 +60,15 @@ class UserUpdate(BaseModel):
     status: UserStatus | None = None
     # Admin password reset; the user should change it after signing in.
     password: NewPassword | None = None
+
+
+class UserBrief(BaseModel):
+    """Minimal user info for pickers (for example assigning a teacher)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
 
 
 class UserList(BaseModel):

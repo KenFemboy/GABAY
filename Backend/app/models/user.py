@@ -4,7 +4,7 @@ from enum import StrEnum
 from sqlalchemy import CheckConstraint, DateTime, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base
+from app.db.base import Base, in_list
 
 
 class Role(StrEnum):
@@ -19,16 +19,12 @@ class UserStatus(StrEnum):
     INACTIVE = "inactive"
 
 
-def _in_list(column: str, values: type[StrEnum]) -> str:
-    quoted = ", ".join(f"'{v.value}'" for v in values)
-    return f"{column} IN ({quoted})"
-
 
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (
-        CheckConstraint(_in_list("role", Role), name="ck_users_role"),
-        CheckConstraint(_in_list("status", UserStatus), name="ck_users_status"),
+        CheckConstraint(in_list("role", Role), name="ck_users_role"),
+        CheckConstraint(in_list("status", UserStatus), name="ck_users_status"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

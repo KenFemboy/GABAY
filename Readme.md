@@ -60,6 +60,63 @@ Roles: `system_admin`, `sned_coordinator`, `teacher`, `school_head` (School Head
 Passwords are hashed with Argon2id. Use `require_roles(...)` from `app/core/permissions.py`
 to protect new endpoints; the frontend route/navigation checks are a usability layer only.
 
+## Learners
+
+The learner record is the centre of GABAY: assessments, IEPs, ILAW entries, progress records
+and evaluations all carry a `learner_id`.
+
+- `GET /api/learners` – list with `search` (name or code), `grade_level`, `section`,
+  `school_year`, `status`, `offset`, `limit`.
+- `POST /api/learners`, `GET/PATCH /api/learners/{id}` – learner codes are unique
+  (case-insensitive). Learners are never deleted; set `status` to `transferred`,
+  `graduated` or `inactive` instead.
+- `GET /api/learners/{id}/summary` – count and latest status per module.
+- `GET/POST /api/learners/{id}/assignments`, `DELETE /api/learners/{id}/assignments/{assignment_id}`
+  – teacher assignments per school year. `GET /api/users/teachers` lists active Teachers for the picker.
+
+Access: the SNED Coordinator manages all learners and assignments. The School Head can read
+all learners. Teachers can read only the learners assigned to them for the learner's current
+school year; other records return 404. The System Administrator has no learner access.
+Later modules must call `learner_service.get_visible_learner(...)` before touching a learner's data.
+
+For development, seed fake learners with `python -m app.scripts.seed_learners`.
+**Never use real learner data in development.**
+
+## Assessments and document storage
+
+Each learner can have informal (section adviser) and formal (psychologist) assessments, and each
+assessment can have one uploaded document.
+
+- `GET /api/assessments?learner_id=`, `POST /api/assessments`, `GET /api/assessments/{id}`
+- `POST /api/assessments/{id}/document` – multipart `file`. Only PDF, JPG and PNG files are
+  accepted, up to `MAX_UPLOAD_MB` (default 15). The type is checked from the file's header bytes,
+  not only its name. A file already uploaded for the same learner (same SHA-256) is rejected.
+- `GET /api/assessments/{id}/document?download=false|true` – checks access, then returns
+  `{url, expires_in}`: a signed URL that is valid for `SIGNED_URL_TTL_SECONDS` (default 60).
+- `DELETE /api/assessments/{id}/document` – SNED Coordinator only. Not allowed once the
+  assessment is finalized.
+
+Status flow: Draft → Uploaded → Processing → Processed → Needs Review → Finalized.
+The Coordinator and assigned Teachers can create assessments and upload documents. The School
+Head can only view them.
+
+Files never go into PostgreSQL. The database stores only metadata and a random storage key
+(`assessments/{uuid}.pdf`). Storage is chosen with `STORAGE_BACKEND`:
+
+- `local` (default) – files are saved under `Backend/storage/` (gitignored). Signed URLs point at
+  `GET /api/files/{token}` on this API. No cloud keys are needed.
+- `supabase` – a private Supabase Storage bucket. One-time setup:
+  1. In the Supabase dashboard, go to **Storage**, create a bucket named `gabay-documents`, and
+     leave **Public bucket** turned off.
+  2. Optional, as a second check: set the bucket's file size limit to 15 MB and its allowed MIME
+     types to `application/pdf, image/jpeg, image/png`.
+  3. In `Backend/.env`, set `STORAGE_BACKEND=supabase`, `SUPABASE_URL`, and
+     `SUPABASE_SERVICE_ROLE_KEY` (from **Project Settings → API**). This key bypasses Supabase's
+     access rules, so keep it in the backend `.env` only. Never put it in `Frontend/.env` or
+     commit it.
+
+  No storage RLS policies are needed, because only the backend talks to the bucket.
+
 ## Validation
 
 ```powershell
