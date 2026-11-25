@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
-import { createAssessment, deleteDocument, getDocumentUrl, listAssessments } from '../../api/assessmentApi'
+import { createAssessment, deleteDocument, getDocumentUrl, listAssessments, processAssessment } from '../../api/assessmentApi'
 import useAuth from '../../auth/useAuth'
 import Alert from '../../shared/components/Alert'
 import { primaryButtonClass, secondaryButtonClass } from '../../shared/forms/styles'
@@ -12,6 +13,9 @@ import {
   DOCUMENT_DELETER_ROLES,
   DOCUMENT_LOCKED_STATUSES,
   formatFileSize,
+  PROCESSABLE_STATUSES,
+  PROCESSING_POLL_MS,
+  REVIEWABLE_STATUSES,
   STATUS_MANAGER_ROLES,
   TYPE_LABELS,
 } from './constants'
@@ -37,6 +41,21 @@ function AssessmentDetails({ assessment, canWrite, canDelete, canManageStatus, o
     }
   }
 
+  const handleProcess = async () => {
+    const reprocess = assessment.processing_status !== 'uploaded'
+    if (reprocess && !window.confirm('Process the document again? The current OCR text and any corrections will be replaced.')) return
+    setBusy(true)
+    setError(null)
+    try {
+      const { data } = await processAssessment(assessment.id)
+      onChanged(data, reprocess ? 'Reprocessing started.' : 'Processing started. This can take a minute per page.')
+    } catch (err) {
+      setError(getErrorMessage(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const handleRemove = async () => {
     if (!window.confirm(`Remove ${doc.original_filename}? The assessment returns to Draft.`)) return
     setBusy(true)
@@ -59,6 +78,12 @@ function AssessmentDetails({ assessment, canWrite, canDelete, canManageStatus, o
         <div className="sm:col-span-3"><dt className="text-xs text-slate-500">Notes</dt><dd className="whitespace-pre-wrap">{assessment.notes || '—'}</dd></div>
       </dl>
       {error && <Alert>{error}</Alert>}
+      {assessment.ocr_error && assessment.processing_status === 'uploaded' && (
+        <Alert>Processing failed: {assessment.ocr_error}</Alert>
+      )}
+      {assessment.processing_status === 'processing' && (
+        <Alert tone="info">Reading the document… this page updates automatically.</Alert>
+      )}
       {doc ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3">
           <div className="text-sm">
@@ -81,6 +106,28 @@ function AssessmentDetails({ assessment, canWrite, canDelete, canManageStatus, o
         <DocumentUpload assessmentId={assessment.id} onUploaded={(data) => onChanged(data, 'Document uploaded.')} />
       ) : (
         <p className="text-sm text-slate-500">No document uploaded yet.</p>
+      )}
+      {doc && (canWrite || REVIEWABLE_STATUSES.includes(assessment.processing_status)) && (
+        <div className="flex flex-wrap gap-2">
+          {REVIEWABLE_STATUSES.includes(assessment.processing_status) && (
+            <Link
+              className={`${primaryButtonClass} px-3 py-1 text-sm`}
+              to={`/learners/${assessment.learner_id}/assessments/${assessment.id}/review`}
+            >
+              Review text
+            </Link>
+          )}
+          {canWrite && PROCESSABLE_STATUSES.includes(assessment.processing_status) && (
+            <button
+              className={`${assessment.processing_status === 'uploaded' ? primaryButtonClass : secondaryButtonClass} px-3 py-1 text-sm`}
+              disabled={busy}
+              onClick={handleProcess}
+              type="button"
+            >
+              {assessment.processing_status === 'uploaded' ? (assessment.ocr_error ? 'Try processing again' : 'Process document') : 'Reprocess'}
+            </button>
+          )}
+        </div>
       )}
       {canManageStatus && <StatusControl assessment={assessment} onChanged={onChanged} />}
       {previewing && doc && (
@@ -114,6 +161,21 @@ export default function AssessmentsTab({ learner, onChanged }) {
       .catch((err) => { if (active) setLoadState({ loading: false, error: getErrorMessage(err) }) })
     return () => { active = false }
   }, [learner.id, reloadKey])
+
+  // While any document is being processed, poll until the worker finishes it.
+  const anyProcessing = data.items.some((a) => a.processing_status === 'processing')
+  useEffect(() => {
+    if (!anyProcessing) return undefined
+    const timer = setInterval(() => {
+      listAssessments(learner.id)
+        .then(({ data: result }) => {
+          setData(result)
+          if (!result.items.some((a) => a.processing_status === 'processing')) onChanged?.()
+        })
+        .catch(() => {}) // keep polling quietly; the next tick may succeed
+    }, PROCESSING_POLL_MS)
+    return () => clearInterval(timer)
+  }, [anyProcessing, learner.id, onChanged])
 
   const refresh = (text) => {
     setMessage(text)

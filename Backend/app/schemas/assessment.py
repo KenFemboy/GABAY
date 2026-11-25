@@ -51,6 +51,7 @@ class AssessmentRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     document: DocumentRead | None
+    ocr_error: str | None = None
 
     @computed_field
     @property

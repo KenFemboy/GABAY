@@ -33,3 +33,24 @@ export function formatFileSize(bytes) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
+
+// OCR (Stage 5). The backend sends the real threshold in the OCR summary
+// (OCR_REVIEW_CONFIDENCE); this is only the fallback.
+export const DEFAULT_REVIEW_CONFIDENCE = 70
+export const PROCESSABLE_STATUSES = ['uploaded', 'processed', 'needs_review']
+export const REVIEWABLE_STATUSES = ['processed', 'needs_review', 'finalized']
+export const EDITABLE_OCR_STATUSES = ['processed', 'needs_review']
+export const PROCESSING_POLL_MS = 3000
+
+export function confidenceTone(page, threshold = DEFAULT_REVIEW_CONFIDENCE) {
+  if (page.status === 'failed') return 'bg-red-100 text-red-700 border-red-200'
+  if (page.source === 'text_layer') return 'bg-slate-100 text-slate-700 border-slate-200'
+  if (page.confidence == null || page.confidence < threshold) return 'bg-amber-100 text-amber-800 border-amber-200'
+  return 'bg-emerald-100 text-emerald-700 border-emerald-200'
+}
+
+export function pageSourceLabel(page) {
+  if (page.status === 'failed') return 'Failed'
+  if (page.source === 'text_layer') return 'PDF text'
+  return page.confidence == null ? 'OCR' : `OCR · ${Math.round(page.confidence)}%`
+}

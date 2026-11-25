@@ -100,9 +100,10 @@ assessment can have one uploaded document.
   409 `invalid_status_transition`.
 
 Status flow: Draft → Uploaded → Processing → Processed → Needs Review → Finalized. Draft ↔
-Uploaded happens automatically on upload and on remove. The allowed transitions are defined in
-one place, `Backend/app/services/assessment_status.py`, and Finalized can be reopened to
-Needs Review.
+Uploaded happens automatically on upload and on remove, and Processing and its outcomes are set
+by OCR (see below). The Coordinator moves Processed / Needs Review → Finalized, and can reopen
+Finalized to Needs Review. All allowed transitions are defined in one place,
+`Backend/app/services/assessment_status.py`.
 The Coordinator and assigned Teachers can create assessments and upload documents. The School
 Head can only view them.
 
@@ -122,6 +123,71 @@ Files never go into PostgreSQL. The database stores only metadata and a random s
      commit it.
 
   No storage RLS policies are needed, because only the backend talks to the bucket.
+
+## OCR processing
+
+Uploaded documents are read by a background **OCR worker**. For each PDF page, the worker uses
+the PDF's own text layer when there is one. Otherwise it renders the page at 300 DPI, converts
+it to grayscale, resizes it and boosts the contrast, then runs Tesseract (`eng+fil`). Each page's
+text and confidence are saved in page order. If one page fails, the rest of the document still
+goes through. OCR text (`raw_text`) and the human-corrected text (`reviewed_text`) are kept apart.
+
+- `POST /api/assessments/{id}/process` – Coordinator or assigned Teacher. Queues a job and
+  returns **202** right away (status → Processing). Reprocessing from Processed / Needs Review
+  replaces the OCR text and discards any corrections.
+- `GET /api/assessments/{id}/ocr` – `{job, pages, summary}` for anyone who can see the learner.
+- `PUT /api/assessments/{id}/ocr/pages/{n}` – body `{reviewed_text}` (`null` reverts to the OCR
+  text). Allowed only while Processed or Needs Review.
+
+When the job finishes, the assessment goes to **Processed** if every page was read with
+confidence ≥ `OCR_REVIEW_CONFIDENCE` (default 70). If not, it goes to **Needs Review**. If no page
+could be read, it goes back to **Uploaded**, with the error shown in the UI. The review screen
+(**Review text** on an assessment) shows the original page next to editable text.
+
+### Install Tesseract (development, Windows)
+
+1. Download the Windows installer from the UB Mannheim build
+   (https://github.com/UB-Mannheim/tesseract/wiki) and run it.
+2. On **Choose Components → Additional language data**, tick **Filipino**. English is included by
+   default.
+3. In `Backend/.env`, set `TESSERACT_CMD=C:\Program Files\Tesseract-OCR\tesseract.exe`.
+4. Check that it works: `GET http://localhost:8000/api/config/status` should show
+   `"ocr_available": true`.
+
+On Debian/Ubuntu: `sudo apt install tesseract-ocr tesseract-ocr-eng tesseract-ocr-fil`, and leave
+`TESSERACT_CMD` blank.
+
+### Run the worker
+
+In a third terminal, alongside the API and the frontend:
+
+```powershell
+cd Backend
+.\.venv\Scripts\Activate.ps1
+alembic upgrade head          # once, creates the ocr_jobs / ocr_pages tables
+python -m app.workers.ocr_worker
+```
+
+If the worker isn't running, jobs stay queued and the assessment stays in Processing. Use
+`python -m app.workers.ocr_worker --once` to process a single job and exit.
+
+To get test documents, run `python -m app.scripts.make_ocr_samples`. It writes synthetic samples
+to `Backend/samples/` (gitignored), one for each OCR outcome, and the expected results are listed
+at the top of the script. Never use real learner documents in development.
+
+### Docker (production)
+
+`Backend/Dockerfile` installs Tesseract with English and Filipino. The same image runs either
+process:
+
+```bash
+docker build -t gabay-backend Backend
+docker run --env-file Backend/.env -p 8000:8000 gabay-backend                       # API
+docker run --env-file Backend/.env gabay-backend python -m app.workers.ocr_worker   # worker
+```
+
+With local storage, both containers must share the storage directory (a volume). With Supabase,
+they don't need to.
 
 ## Validation
 

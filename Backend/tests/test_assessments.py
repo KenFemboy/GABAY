@@ -442,22 +442,29 @@ def set_status(client, headers, assessment_id, status):
     return client.patch(f"/api/assessments/{assessment_id}/status", headers=headers, json={"status": status})
 
 
-def test_status_happy_path_and_reopen(client, coord_headers, make_learner, make_assessment, storage):
+def force_status(db_session, assessment_id, status):
+    """Test setup only: put an assessment straight into a status (as the OCR worker would)."""
+    row = db_session.get(Assessment, assessment_id)
+    row.processing_status = status
+    db_session.commit()
+
+
+def test_manual_status_flow_and_reopen(client, coord_headers, make_learner, make_assessment, storage, db_session):
     assessment = make_assessment(make_learner()["id"])
     assert assessment["processing_status"] == "draft"
     assert assessment["next_statuses"] == []
 
     uploaded = upload(client, coord_headers, assessment["id"]).json()
     assert uploaded["processing_status"] == "uploaded"
-    assert uploaded["next_statuses"] == ["processing"]
+    # Processing is started with POST /process, not by a manual status change.
+    assert uploaded["next_statuses"] == []
 
+    force_status(db_session, assessment["id"], "processed")
     expected_next = {
-        "processing": ["processed", "needs_review"],
-        "processed": ["needs_review", "finalized"],
+        "needs_review": ["finalized"],
         "finalized": ["needs_review"],
-        "needs_review": ["processing", "finalized"],
     }
-    for target in ["processing", "processed", "finalized", "needs_review", "finalized"]:
+    for target in ["needs_review", "finalized", "needs_review", "finalized"]:
         response = set_status(client, coord_headers, assessment["id"], target)
         assert response.status_code == 200, response.text
         assert response.json()["processing_status"] == target
@@ -465,31 +472,33 @@ def test_status_happy_path_and_reopen(client, coord_headers, make_learner, make_
 
 
 @pytest.mark.parametrize(
-    ("steps", "target"),
+    ("start", "target"),
     [
-        ([], "finalized"),  # still draft, no document
-        ([], "processing"),
-        (["upload"], "finalized"),
-        (["upload"], "draft"),  # system-only
-        (["upload"], "uploaded"),  # no-op / system-only
-        (["upload", "processing"], "uploaded"),  # system-only (processing failed)
-        (["upload", "processing"], "finalized"),
+        ("draft", "finalized"),
+        ("draft", "processing"),
+        ("uploaded", "processing"),  # use POST /process instead
+        ("uploaded", "finalized"),
+        ("uploaded", "draft"),  # system-only
+        ("uploaded", "uploaded"),
+        ("processing", "processed"),  # set by the OCR worker only
+        ("processing", "needs_review"),
+        ("processing", "uploaded"),
+        ("processing", "finalized"),
+        ("needs_review", "processing"),  # reprocess goes through POST /process
+        ("finalized", "processed"),
     ],
 )
-def test_invalid_status_transitions_rejected(client, coord_headers, make_learner, make_assessment, storage, steps, target):
+def test_invalid_status_transitions_rejected(client, coord_headers, make_learner, make_assessment, storage, db_session, start, target):
     assessment = make_assessment(make_learner()["id"])
-    for step in steps:
-        if step == "upload":
-            upload(client, coord_headers, assessment["id"])
-        else:
-            assert set_status(client, coord_headers, assessment["id"], step).status_code == 200
+    if start != "draft":
+        upload(client, coord_headers, assessment["id"])
+        force_status(db_session, assessment["id"], start)
 
-    before = client.get(f"/api/assessments/{assessment['id']}", headers=coord_headers).json()["processing_status"]
     response = set_status(client, coord_headers, assessment["id"], target)
     assert response.status_code == 409
     assert response.json()["error"]["code"] == "invalid_status_transition"
     after = client.get(f"/api/assessments/{assessment['id']}", headers=coord_headers).json()["processing_status"]
-    assert after == before
+    assert after == start
 
 
 def test_unknown_status_value_rejected(client, coord_headers, make_learner, make_assessment, storage):
@@ -497,23 +506,24 @@ def test_unknown_status_value_rejected(client, coord_headers, make_learner, make
     assert set_status(client, coord_headers, assessment["id"], "archived").status_code == 422
 
 
-def test_only_coordinator_changes_status(client, make_user, login, coord_headers, make_learner, make_assessment, storage):
+def test_only_coordinator_changes_status(client, make_user, login, coord_headers, make_learner, make_assessment, storage, db_session):
     learner = make_learner()
     assessment = make_assessment(learner["id"])
     upload(client, coord_headers, assessment["id"])
+    force_status(db_session, assessment["id"], "processed")
 
     teacher = make_user(Role.TEACHER)
     client.post(f"/api/learners/{learner['id']}/assignments", headers=coord_headers, json={"user_id": teacher.id})
     for headers in (login(teacher), login(make_user(Role.SCHOOL_HEAD)), login(make_user(Role.SYSTEM_ADMIN))):
-        assert set_status(client, headers, assessment["id"], "processing").status_code == 403
-    assert client.patch(f"/api/assessments/{assessment['id']}/status", json={"status": "processing"}).status_code == 401
-    assert set_status(client, coord_headers, 999999, "processing").status_code == 404
+        assert set_status(client, headers, assessment["id"], "finalized").status_code == 403
+    assert client.patch(f"/api/assessments/{assessment['id']}/status", json={"status": "finalized"}).status_code == 401
+    assert set_status(client, coord_headers, 999999, "finalized").status_code == 404
 
 
-def test_document_cannot_be_removed_while_processing(client, coord_headers, make_learner, make_assessment, storage):
+def test_document_cannot_be_removed_while_processing(client, coord_headers, make_learner, make_assessment, storage, db_session):
     assessment = make_assessment(make_learner()["id"])
     upload(client, coord_headers, assessment["id"])
-    set_status(client, coord_headers, assessment["id"], "processing")
+    force_status(db_session, assessment["id"], "processing")
 
     response = client.delete(f"/api/assessments/{assessment['id']}/document", headers=coord_headers)
     assert response.status_code == 409
@@ -521,11 +531,10 @@ def test_document_cannot_be_removed_while_processing(client, coord_headers, make
     assert len(stored_files(storage)) == 1
 
 
-def test_removing_document_from_needs_review_returns_to_draft(client, coord_headers, make_learner, make_assessment, storage):
+def test_removing_document_from_needs_review_returns_to_draft(client, coord_headers, make_learner, make_assessment, storage, db_session):
     assessment = make_assessment(make_learner()["id"])
     upload(client, coord_headers, assessment["id"])
-    set_status(client, coord_headers, assessment["id"], "processing")
-    set_status(client, coord_headers, assessment["id"], "needs_review")
+    force_status(db_session, assessment["id"], "needs_review")
 
     response = client.delete(f"/api/assessments/{assessment['id']}/document", headers=coord_headers)
     assert response.status_code == 200

@@ -9,6 +9,7 @@ from app.core.config import get_settings
 from app.core.errors import APIError
 from app.db.session import engine
 from app.routers import assessments, auth, files, learners, users
+from app.services.ocr_service import tesseract_status
 
 settings = get_settings()
 app = FastAPI(title=settings.app_name, version=settings.app_version)
@@ -97,4 +98,5 @@ def config_status() -> dict:
         "frontend_origin": settings.frontend_origin,
         "database_configured": bool(settings.database_url),
         "storage_backend": settings.storage_backend,
+        **tesseract_status(settings),
     }

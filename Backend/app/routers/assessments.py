@@ -17,7 +17,10 @@ from app.schemas.assessment import (
     AssessmentStatusUpdate,
     SignedUrlRead,
 )
-from app.services import assessment_service
+from app.core.config import get_settings
+from app.models.ocr import OcrPageSource, OcrPageStatus
+from app.schemas.ocr import OcrJobRead, OcrPageRead, OcrPageUpdate, OcrResultRead, OcrSummary
+from app.services import assessment_service, ocr_job_service
 from app.services.storage_service import StorageBackend, get_storage
 
 router = APIRouter(prefix="/api/assessments", tags=["assessments"])
@@ -64,6 +67,57 @@ def change_status(
 ) -> Assessment:
     assessment = assessment_service.get_visible_assessment(db, assessment_id, user)
     return assessment_service.change_status(db, assessment, payload.status)
+
+
+@router.post(
+    "/{assessment_id}/process", response_model=AssessmentRead, status_code=status.HTTP_202_ACCEPTED
+)
+def process_assessment(
+    assessment_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_assessment_writers),
+) -> Assessment:
+    """Queue OCR for the document and return immediately (the worker does the work)."""
+    assessment = assessment_service.get_visible_assessment(db, assessment_id, user)
+    return ocr_job_service.enqueue(db, user, assessment)
+
+
+@router.get("/{assessment_id}/ocr", response_model=OcrResultRead)
+def get_ocr(
+    assessment_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_learner_readers),
+) -> OcrResultRead:
+    assessment = assessment_service.get_visible_assessment(db, assessment_id, user)
+    pages = ocr_job_service.list_pages(db, assessment)
+    job = ocr_job_service.latest_job(db, assessment.id)
+    threshold = get_settings().ocr_review_confidence
+    ocr_conf = [p.confidence for p in pages if p.source == OcrPageSource.OCR and p.confidence is not None]
+    summary = OcrSummary(
+        page_count=len(pages),
+        failed_pages=sum(1 for p in pages if p.status == OcrPageStatus.FAILED),
+        low_confidence_pages=sum(1 for c in ocr_conf if c < threshold),
+        reviewed_pages=sum(1 for p in pages if p.reviewed_text is not None),
+        mean_confidence=round(sum(ocr_conf) / len(ocr_conf), 1) if ocr_conf else None,
+        review_confidence=threshold,
+    )
+    return OcrResultRead(
+        job=OcrJobRead.model_validate(job) if job else None,
+        pages=[OcrPageRead.model_validate(p) for p in pages],
+        summary=summary,
+    )
+
+
+@router.put("/{assessment_id}/ocr/pages/{page_number}", response_model=OcrPageRead)
+def update_ocr_page(
+    assessment_id: int,
+    page_number: int,
+    payload: OcrPageUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_assessment_writers),
+):
+    assessment = assessment_service.get_visible_assessment(db, assessment_id, user)
+    return ocr_job_service.update_reviewed_text(db, user, assessment, page_number, payload.reviewed_text)
 
 
 @router.post("/{assessment_id}/document", response_model=AssessmentRead)

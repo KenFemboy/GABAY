@@ -57,9 +57,21 @@ class Assessment(Base):
         back_populates="assessment", uselist=False, lazy="joined"
     )
 
+    # Newest first; used for the latest OCR error. Small per assessment.
+    ocr_jobs: Mapped[list["OcrJob"]] = relationship(  # noqa: F821
+        lazy="selectin", order_by="desc(OcrJob.id)", viewonly=True
+    )
+
     @property
     def created_by_name(self) -> str:
         return self.creator.name
+
+    @property
+    def ocr_error(self) -> str | None:
+        """Message of the latest OCR job if it failed, else None."""
+        if self.ocr_jobs and self.ocr_jobs[0].status == "failed":
+            return self.ocr_jobs[0].error_message
+        return None
 
 
 class Document(Base):

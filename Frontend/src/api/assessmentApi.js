@@ -28,4 +28,14 @@ export const getDocumentUrl = (assessmentId, { download = false } = {}) =>
 export const updateAssessmentStatus = (assessmentId, status) =>
   client.patch(`/assessments/${assessmentId}/status`, { status })
 
+/** Queue OCR (or reprocess). Returns 202 with the assessment in `processing`. */
+export const processAssessment = (assessmentId) => client.post(`/assessments/${assessmentId}/process`)
+
+/** { job, pages, summary } */
+export const getOcr = (assessmentId) => client.get(`/assessments/${assessmentId}/ocr`)
+
+/** `reviewedText = null` reverts the page to the raw OCR text. */
+export const updateOcrPage = (assessmentId, pageNumber, reviewedText) =>
+  client.put(`/assessments/${assessmentId}/ocr/pages/${pageNumber}`, { reviewed_text: reviewedText })
+
 export const deleteDocument = (assessmentId) => client.delete(`/assessments/${assessmentId}/document`)

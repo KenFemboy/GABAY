@@ -45,6 +45,31 @@ class Settings(BaseSettings):
     # Base URL of this API as the browser sees it; used for local-storage signed URLs.
     public_api_url: str = Field(default="http://localhost:8000", validation_alias="PUBLIC_API_URL")
 
+    # OCR (Stage 5). Run the worker with: python -m app.workers.ocr_worker
+    # Blank TESSERACT_CMD means "find tesseract on PATH".
+    tesseract_cmd: str = Field(default="", validation_alias="TESSERACT_CMD")
+    ocr_languages: str = Field(default="eng+fil", validation_alias="OCR_LANGUAGES")
+    ocr_dpi: int = Field(default=300, ge=72, le=600, validation_alias="OCR_DPI")
+    ocr_max_pages: int = Field(default=50, ge=1, le=500, validation_alias="OCR_MAX_PAGES")
+    # Pages below this mean word confidence (0-100) send the assessment to Needs Review.
+    ocr_review_confidence: float = Field(
+        default=70, ge=0, le=100, validation_alias="OCR_REVIEW_CONFIDENCE"
+    )
+    # A PDF page with at least this many text-layer characters is not OCR'd.
+    ocr_min_text_layer_chars: int = Field(
+        default=20, ge=1, validation_alias="OCR_MIN_TEXT_LAYER_CHARS"
+    )
+    ocr_page_timeout_seconds: int = Field(
+        default=120, ge=5, validation_alias="OCR_PAGE_TIMEOUT_SECONDS"
+    )
+    ocr_worker_poll_seconds: float = Field(
+        default=2, gt=0, validation_alias="OCR_WORKER_POLL_SECONDS"
+    )
+    ocr_job_timeout_minutes: int = Field(
+        default=30, ge=1, validation_alias="OCR_JOB_TIMEOUT_MINUTES"
+    )
+    ocr_max_attempts: int = Field(default=2, ge=1, le=10, validation_alias="OCR_MAX_ATTEMPTS")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

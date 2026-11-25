@@ -1,6 +1,6 @@
 GABAY - Known limitations and follow-ups
 =========================================
-Stages 3 and 4. Written 2026-11-24.
+Stages 3 to 5. Last updated 2026-11-25.
 
 This file is a to-do list for later. Each item says what the limit is and, where there is one,
 what to do about it. Update the file when an item is fixed or a new limit is found.
@@ -109,16 +109,15 @@ Workflow limits
   assessment is Processing or once it is Finalized.
 - Status transitions are defined in one place, app/services/assessment_status.py:
     Automatic: Draft -> Uploaded (upload), Uploaded/Processed/Needs Review -> Draft (remove),
-               Processing -> Uploaded (processing failed; nothing uses this yet)
-    Manual:    Uploaded -> Processing; Processing -> Processed or Needs Review;
-               Processed -> Needs Review or Finalized; Needs Review -> Processing or Finalized;
+               Uploaded/Processed/Needs Review -> Processing (POST /process),
+               Processing -> Processed or Needs Review (OCR finished),
+               Processing -> Uploaded (OCR failed completely)
+    Manual:    Processed -> Needs Review or Finalized; Needs Review -> Finalized;
                Finalized -> Needs Review (reopen)
   Only the SNED Coordinator can make manual changes (PATCH /api/assessments/{id}/status).
   Teachers cannot flag an assessment for review.
-- There is no OCR yet, so the Coordinator moves an assessment to Processing and Processed by
-  hand. When the OCR/extraction stage is built, it should call
-  assessment_status.transition(..., manual=False) and add its own steps to SYSTEM_TRANSITIONS.
-  It should not set processing_status directly.
+- Later stages (extraction etc.) must change status through
+  assessment_status.transition(..., manual=False), never by setting processing_status directly.
 - Status changes are not recorded anywhere. There is no history of who finalized or reopened an
   assessment (see AUDIT LOGGING below).
 - Assessment details (type, date, assessor, notes) cannot be edited yet, and an assessment
@@ -157,6 +156,78 @@ Configuration and security
 - AUDIT LOGGING IS NOT DONE YET (planned for Stage 14). Nothing records uploads, downloads or
   removals. Add it in assessment_service: get_visible_assessment, upload_document,
   delete_document, change_status and document_signed_url.
+
+
+-------------------------------------------------------------------------------
+STAGE 5 - OCR PROCESSING
+-------------------------------------------------------------------------------
+
+Not yet confirmed or checked
+- Tesseract is NOT installed on the development machine yet. Every OCR test except one uses a
+  fake OCR engine. The real-Tesseract test (tests/test_ocr.py::test_real_tesseract_reads_rendered_text)
+  is skipped until Tesseract is installed. After installing it, run the tests again and check
+  that /api/config/status shows "ocr_available": true.
+- OCR quality has not been checked on real (synthetic but realistic) SNED assessment forms,
+  handwritten notes, or phone photos. Test this before relying on the confidence threshold.
+- The Dockerfile has not been built or run.
+- The review screen has not been clicked through in a browser.
+
+Running it
+- The OCR worker is a SEPARATE process: python -m app.workers.ocr_worker (run from Backend/).
+  If it is not running, jobs stay "queued" and assessments stay in Processing forever. The UI
+  does not detect that the worker is missing.
+- If the worker is killed in the middle of a job, the job is picked up again after
+  OCR_JOB_TIMEOUT_MINUTES (default 30). After OCR_MAX_ATTEMPTS (default 2) tries, it is marked
+  failed and the assessment returns to Uploaded.
+- Each worker processes one job at a time. To process more at once, run more workers; they
+  share the queue safely through FOR UPDATE SKIP LOCKED (PostgreSQL).
+- If Tesseract or a language (eng, fil) is missing, the worker still starts, but every job fails
+  with a message saying what is missing.
+
+Accuracy and limits
+- Tesseract is poor at handwriting. Handwritten pages will usually get low confidence and
+  go to Needs Review, and the text may be unusable.
+- The Filipino (fil) model is less accurate than English. Mixed eng+fil OCR is also slower.
+- Confidence is Tesseract's own word confidence (mean, weighted by word length). It is a
+  rough signal only. A page can score high and still have wrong words.
+- Confidence only rates the words Tesseract FOUND, not the ones it missed. On a very faded
+  page, Tesseract may read only the large header and skip the body, and the page still
+  scores 80-85% and can go straight to Processed. Seen while making the sample documents
+  (app/scripts/make_ocr_samples.py). Possible fix later: also flag pages whose word count is
+  much lower than the other pages, or lower than expected for the page size.
+- An assessment goes to Needs Review if ANY page failed or ANY OCR page is below
+  OCR_REVIEW_CONFIDENCE (default 70). Text-layer PDF pages are not scored and are trusted
+  as they are, even if the PDF's embedded text is wrong.
+- A PDF page counts as having a text layer when it has at least OCR_MIN_TEXT_LAYER_CHARS (20)
+  characters. A page with a short caption over a scanned image will use the caption and skip
+  OCR. Lower or raise the setting if this happens.
+- Only the first OCR_MAX_PAGES (default 50) pages are processed. Later pages are recorded as
+  failed ("Page limit reached").
+- Each page has a time limit of OCR_PAGE_TIMEOUT_SECONDS (default 120).
+- Pages are not deskewed or de-rotated (other than the EXIF rotation on photos). Crooked
+  scans OCR worse. The preprocessing is grayscale, resize, auto-contrast and a light noise
+  filter only.
+- Encrypted (password-protected) PDFs cannot be processed.
+
+Review workflow
+- Reprocessing (allowed from Processed or Needs Review) REPLACES all OCR pages. Any
+  corrections made in the review screen are lost. The UI asks for confirmation first.
+- Corrections are allowed only while the assessment is Processed or Needs Review. Finalize
+  locks them; reopen (Finalized -> Needs Review) to edit again.
+- Saving a correction does not change the status. The Coordinator decides when to finalize.
+- There is no edit history. Only the latest correction, who made it and when, are kept.
+- The PDF page shown next to the text uses the browser's PDF viewer (#page=N). Some browsers
+  ignore #page and always show page 1.
+- Removing the document deletes its OCR pages and jobs (ON DELETE CASCADE), including any
+  error message from a failed job.
+
+Security and privacy
+- OCR text is learner data. It is stored in PostgreSQL in plain text, like other learner
+  fields, and is protected only by database access controls. It is never written to logs.
+- The worker needs the same DATABASE_URL and storage settings as the API (including
+  SUPABASE_SERVICE_ROLE_KEY when using Supabase).
+- AUDIT LOGGING IS NOT DONE YET (Stage 14). Nothing records who started processing or who
+  corrected the text, beyond reviewed_by on each page.
 
 
 -------------------------------------------------------------------------------

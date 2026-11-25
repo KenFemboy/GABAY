@@ -2,9 +2,9 @@
 
 Draft → Uploaded → Processing → Processed → Needs Review → Finalized.
 
-* System transitions happen as side effects of events (document uploaded or
-  removed, processing failed). Later OCR/extraction stages call
-  ``transition(..., manual=False)`` too.
+* System transitions happen as side effects of events: document uploaded or
+  removed, OCR queued (``ocr_job_service.enqueue``), OCR finished or failed
+  (the OCR worker).
 * Manual transitions are what a user may request via
   ``PATCH /api/assessments/{id}/status``.
 
@@ -36,16 +36,19 @@ SYSTEM_TRANSITIONS: frozenset[tuple[ProcessingStatus, ProcessingStatus]] = froze
         (S.UPLOADED, S.DRAFT),  # document removed
         (S.PROCESSED, S.DRAFT),
         (S.NEEDS_REVIEW, S.DRAFT),
-        (S.PROCESSING, S.UPLOADED),  # processing failed; may be retried
+        (S.UPLOADED, S.PROCESSING),  # OCR queued
+        (S.PROCESSED, S.PROCESSING),  # reprocess
+        (S.NEEDS_REVIEW, S.PROCESSING),
+        (S.PROCESSING, S.PROCESSED),  # OCR finished, all pages good
+        (S.PROCESSING, S.NEEDS_REVIEW),  # OCR finished, some pages failed or low confidence
+        (S.PROCESSING, S.UPLOADED),  # OCR failed completely; may be retried
     }
 )
 
 # Ordered so the UI can show buttons in a sensible order.
 MANUAL_TRANSITIONS: dict[ProcessingStatus, tuple[ProcessingStatus, ...]] = {
-    S.UPLOADED: (S.PROCESSING,),
-    S.PROCESSING: (S.PROCESSED, S.NEEDS_REVIEW),
     S.PROCESSED: (S.NEEDS_REVIEW, S.FINALIZED),
-    S.NEEDS_REVIEW: (S.PROCESSING, S.FINALIZED),
+    S.NEEDS_REVIEW: (S.FINALIZED,),
     S.FINALIZED: (S.NEEDS_REVIEW,),  # reopen
 }
 
