@@ -24,14 +24,13 @@ from app.models.assessment import Assessment, AssessmentType, Document, Processi
 from app.models.user import User
 from app.schemas.assessment import AssessmentCreate
 from app.services import learner_service
+from app.services.assessment_status import transition
 from app.services.file_validation import read_and_validate
 from app.services.storage_service import StorageBackend, StorageError
 
 logger = logging.getLogger(__name__)
 
 TYPE_LABELS = {AssessmentType.INFORMAL.value: "informal", AssessmentType.FORMAL.value: "formal"}
-# Statuses where the document may still be uploaded or replaced.
-_OPEN_STATUSES = {ProcessingStatus.DRAFT.value, ProcessingStatus.UPLOADED.value}
 
 
 def storage_unavailable() -> APIError:
@@ -101,7 +100,7 @@ def upload_document(
             "document_exists",
             "This assessment already has a document. Remove it before uploading another.",
         )
-    if assessment.processing_status not in _OPEN_STATUSES:
+    if assessment.processing_status != ProcessingStatus.DRAFT.value:
         raise conflict("assessment_locked", "Documents cannot be changed at this stage.")
 
     file = read_and_validate(stream, filename, get_settings().max_upload_bytes)
@@ -137,10 +136,10 @@ def upload_document(
             uploaded_by=user.id,
         )
     )
-    assessment.processing_status = ProcessingStatus.UPLOADED.value
     try:
+        transition(db, assessment, ProcessingStatus.UPLOADED, manual=False)
         db.commit()
-    except SQLAlchemyError:
+    except (SQLAlchemyError, APIError):
         db.rollback()
         # Do not leave a stored file without a database row.
         try:
@@ -158,11 +157,18 @@ def delete_document(db: Session, storage: StorageBackend, assessment: Assessment
         raise not_found("This assessment has no document.")
     if assessment.processing_status == ProcessingStatus.FINALIZED.value:
         raise conflict("assessment_finalized", "Documents of a finalized assessment cannot be removed.")
+    if assessment.processing_status == ProcessingStatus.PROCESSING.value:
+        raise conflict(
+            "assessment_processing", "The document cannot be removed while it is being processed."
+        )
 
     key = document.storage_key
     db.delete(document)
-    assessment.processing_status = ProcessingStatus.DRAFT.value
-    db.flush()
+    try:
+        transition(db, assessment, ProcessingStatus.DRAFT, manual=False)
+    except APIError:
+        db.rollback()
+        raise
     try:
         storage.delete(key)
     except StorageError as exc:
@@ -171,6 +177,18 @@ def delete_document(db: Session, storage: StorageBackend, assessment: Assessment
         logger.error("Document delete from storage failed: %s", exc)
         raise storage_unavailable() from exc
     db.commit()
+    db.refresh(assessment)
+    return assessment
+
+
+def change_status(db: Session, assessment: Assessment, target: ProcessingStatus) -> Assessment:
+    """Manual status change requested by a user (see assessment_status.MANUAL_TRANSITIONS)."""
+    try:
+        transition(db, assessment, target, manual=True)
+        db.commit()
+    except APIError:
+        db.rollback()
+        raise
     db.refresh(assessment)
     return assessment
 

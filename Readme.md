@@ -93,10 +93,16 @@ assessment can have one uploaded document.
   not only its name. A file already uploaded for the same learner (same SHA-256) is rejected.
 - `GET /api/assessments/{id}/document?download=false|true` – checks access, then returns
   `{url, expires_in}`: a signed URL that is valid for `SIGNED_URL_TTL_SECONDS` (default 60).
-- `DELETE /api/assessments/{id}/document` – SNED Coordinator only. Not allowed once the
-  assessment is finalized.
+- `DELETE /api/assessments/{id}/document` – SNED Coordinator only. Not allowed while the
+  assessment is processing or once it is finalized. Removing the document returns it to Draft.
+- `PATCH /api/assessments/{id}/status` – body `{status}`, SNED Coordinator only. Only the
+  transitions listed in `next_statuses` on the assessment are accepted; anything else returns
+  409 `invalid_status_transition`.
 
-Status flow: Draft → Uploaded → Processing → Processed → Needs Review → Finalized.
+Status flow: Draft → Uploaded → Processing → Processed → Needs Review → Finalized. Draft ↔
+Uploaded happens automatically on upload and on remove. The allowed transitions are defined in
+one place, `Backend/app/services/assessment_status.py`, and Finalized can be reopened to
+Needs Review.
 The Coordinator and assigned Teachers can create assessments and upload documents. The School
 Head can only view them.
 

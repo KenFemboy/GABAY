@@ -24,4 +24,8 @@ export const uploadDocument = (assessmentId, file, onProgress) => {
 export const getDocumentUrl = (assessmentId, { download = false } = {}) =>
   client.get(`/assessments/${assessmentId}/document`, { params: { download } })
 
+/** Manual status change; allowed targets are in the assessment's `next_statuses`. */
+export const updateAssessmentStatus = (assessmentId, status) =>
+  client.patch(`/assessments/${assessmentId}/status`, { status })
+
 export const deleteDocument = (assessmentId) => client.delete(`/assessments/${assessmentId}/document`)

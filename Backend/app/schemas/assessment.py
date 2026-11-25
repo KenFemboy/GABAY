@@ -1,10 +1,11 @@
 from datetime import date, datetime
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field
+from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field, computed_field
 
 from app.models.assessment import AssessmentType, ProcessingStatus
 from app.schemas.common import strip_optional, strip_required
+from app.services.assessment_status import next_manual_statuses
 
 
 def not_in_future(value: date) -> date:
@@ -50,6 +51,16 @@ class AssessmentRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     document: DocumentRead | None
+
+    @computed_field
+    @property
+    def next_statuses(self) -> list[ProcessingStatus]:
+        """Statuses a Coordinator may move this assessment to next."""
+        return next_manual_statuses(self.processing_status)
+
+
+class AssessmentStatusUpdate(BaseModel):
+    status: ProcessingStatus
 
 
 class AssessmentList(BaseModel):

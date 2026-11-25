@@ -19,6 +19,9 @@ export const PROCESSING_STATUS = {
 
 export const ASSESSMENT_WRITER_ROLES = [ROLES.SNED_COORDINATOR, ROLES.TEACHER]
 export const DOCUMENT_DELETER_ROLES = [ROLES.SNED_COORDINATOR]
+export const STATUS_MANAGER_ROLES = [ROLES.SNED_COORDINATOR]
+// The backend refuses to remove documents in these statuses.
+export const DOCUMENT_LOCKED_STATUSES = ['processing', 'finalized']
 
 // Mirrors the backend checks for quicker feedback; the backend still decides.
 export const ACCEPTED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png']

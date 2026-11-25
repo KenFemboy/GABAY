@@ -71,3 +71,5 @@ require_learner_editors = require_roles(Role.SNED_COORDINATOR)
 # the service via get_visible_learner). Removing documents is Coordinator-only.
 require_assessment_writers = require_roles(Role.SNED_COORDINATOR, Role.TEACHER)
 require_document_deleters = require_roles(Role.SNED_COORDINATOR)
+# Manual processing-status changes (allowed moves: app.services.assessment_status).
+require_status_managers = require_roles(Role.SNED_COORDINATOR)

@@ -72,8 +72,10 @@ Not yet confirmed or checked
     3. Upload a file and check that it appears under assessments/.
     4. Check that preview (iframe) and download both work with the signed URL.
     5. Check that the signed URL stops working after 60 seconds.
-- The screens (upload with progress bar, preview, download, remove) have not been clicked
-  through in a browser.
+- The screens (upload with progress bar, preview, download, remove, status buttons) have not
+  been clicked through in a browser.
+- Production storage is Supabase Storage, chosen instead of S3 or GCS. A different provider
+  needs a new class in app/services/storage_service.py that implements StorageBackend.
 
 Upload limits
 - FastAPI receives the WHOLE upload before GABAY's size check runs. Oversized files are rejected
@@ -103,11 +105,22 @@ Workflow limits
   and then a new one is uploaded.
 - Only the SNED Coordinator can remove a document. A Teacher who uploaded the wrong file has to
   ask the Coordinator.
-- Removing a document sets the assessment back to Draft. Documents of a Finalized assessment
-  cannot be removed.
-- So far, status only moves Draft -> Uploaded on upload and Uploaded -> Draft on remove. The
-  Processing, Processed, Needs Review and Finalized steps belong to later stages
-  (OCR/extraction).
+- Removing a document sets the assessment back to Draft. Documents cannot be removed while the
+  assessment is Processing or once it is Finalized.
+- Status transitions are defined in one place, app/services/assessment_status.py:
+    Automatic: Draft -> Uploaded (upload), Uploaded/Processed/Needs Review -> Draft (remove),
+               Processing -> Uploaded (processing failed; nothing uses this yet)
+    Manual:    Uploaded -> Processing; Processing -> Processed or Needs Review;
+               Processed -> Needs Review or Finalized; Needs Review -> Processing or Finalized;
+               Finalized -> Needs Review (reopen)
+  Only the SNED Coordinator can make manual changes (PATCH /api/assessments/{id}/status).
+  Teachers cannot flag an assessment for review.
+- There is no OCR yet, so the Coordinator moves an assessment to Processing and Processed by
+  hand. When the OCR/extraction stage is built, it should call
+  assessment_status.transition(..., manual=False) and add its own steps to SYSTEM_TRANSITIONS.
+  It should not set processing_status directly.
+- Status changes are not recorded anywhere. There is no history of who finalized or reopened an
+  assessment (see AUDIT LOGGING below).
 - Assessment details (type, date, assessor, notes) cannot be edited yet, and an assessment
   record cannot be deleted.
 
@@ -143,13 +156,12 @@ Configuration and security
   standalone script may not.
 - AUDIT LOGGING IS NOT DONE YET (planned for Stage 14). Nothing records uploads, downloads or
   removals. Add it in assessment_service: get_visible_assessment, upload_document,
-  delete_document and document_signed_url.
+  delete_document, change_status and document_signed_url.
 
 
 -------------------------------------------------------------------------------
 GENERAL
 -------------------------------------------------------------------------------
-- Stages 3 and 4 have not been committed to git yet.
 - If the project folder is moved, the .venv command shortcuts (alembic.exe, uvicorn.exe and
   others) break, because they still point to the old folder. Use "python -m alembic ...",
   "python -m uvicorn ..." and so on, or delete and rebuild .venv.

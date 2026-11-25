@@ -5,11 +5,18 @@ from app.core.permissions import (
     require_assessment_writers,
     require_document_deleters,
     require_learner_readers,
+    require_status_managers,
 )
 from app.db.session import get_db
 from app.models.assessment import Assessment
 from app.models.user import User
-from app.schemas.assessment import AssessmentCreate, AssessmentList, AssessmentRead, SignedUrlRead
+from app.schemas.assessment import (
+    AssessmentCreate,
+    AssessmentList,
+    AssessmentRead,
+    AssessmentStatusUpdate,
+    SignedUrlRead,
+)
 from app.services import assessment_service
 from app.services.storage_service import StorageBackend, get_storage
 
@@ -46,6 +53,17 @@ def get_assessment(
     user: User = Depends(require_learner_readers),
 ) -> Assessment:
     return assessment_service.get_visible_assessment(db, assessment_id, user)
+
+
+@router.patch("/{assessment_id}/status", response_model=AssessmentRead)
+def change_status(
+    assessment_id: int,
+    payload: AssessmentStatusUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_status_managers),
+) -> Assessment:
+    assessment = assessment_service.get_visible_assessment(db, assessment_id, user)
+    return assessment_service.change_status(db, assessment, payload.status)
 
 
 @router.post("/{assessment_id}/document", response_model=AssessmentRead)

@@ -7,13 +7,21 @@ import { primaryButtonClass, secondaryButtonClass } from '../../shared/forms/sty
 import { getErrorMessage } from '../../shared/utils/apiError'
 import AssessmentForm from './AssessmentForm'
 import AssessmentStatusBadge from './AssessmentStatusBadge'
-import { ASSESSMENT_WRITER_ROLES, DOCUMENT_DELETER_ROLES, formatFileSize, TYPE_LABELS } from './constants'
+import {
+  ASSESSMENT_WRITER_ROLES,
+  DOCUMENT_DELETER_ROLES,
+  DOCUMENT_LOCKED_STATUSES,
+  formatFileSize,
+  STATUS_MANAGER_ROLES,
+  TYPE_LABELS,
+} from './constants'
 import DocumentPreview from './DocumentPreview'
 import DocumentUpload from './DocumentUpload'
+import StatusControl from './StatusControl'
 
 const formatDate = (iso) => new Date(`${iso}T00:00:00`).toLocaleDateString()
 
-function AssessmentDetails({ assessment, canWrite, canDelete, onChanged }) {
+function AssessmentDetails({ assessment, canWrite, canDelete, canManageStatus, onChanged }) {
   const [previewing, setPreviewing] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -62,7 +70,7 @@ function AssessmentDetails({ assessment, canWrite, canDelete, onChanged }) {
           <div className="flex gap-2">
             <button className={`${secondaryButtonClass} px-3 py-1 text-sm`} onClick={() => setPreviewing(true)} type="button">Preview</button>
             <button className={`${secondaryButtonClass} px-3 py-1 text-sm`} onClick={handleDownload} type="button">Download</button>
-            {canDelete && assessment.processing_status !== 'finalized' && (
+            {canDelete && !DOCUMENT_LOCKED_STATUSES.includes(assessment.processing_status) && (
               <button className="px-3 py-1 text-sm font-medium text-red-600 hover:underline disabled:opacity-60" disabled={busy} onClick={handleRemove} type="button">
                 Remove
               </button>
@@ -74,6 +82,7 @@ function AssessmentDetails({ assessment, canWrite, canDelete, onChanged }) {
       ) : (
         <p className="text-sm text-slate-500">No document uploaded yet.</p>
       )}
+      {canManageStatus && <StatusControl assessment={assessment} onChanged={onChanged} />}
       {previewing && doc && (
         <DocumentPreview assessmentId={assessment.id} document={doc} onClose={() => setPreviewing(false)} />
       )}
@@ -85,6 +94,7 @@ export default function AssessmentsTab({ learner, onChanged }) {
   const { user } = useAuth()
   const canWrite = ASSESSMENT_WRITER_ROLES.includes(user.role)
   const canDelete = DOCUMENT_DELETER_ROLES.includes(user.role)
+  const canManageStatus = STATUS_MANAGER_ROLES.includes(user.role)
 
   const [data, setData] = useState({ items: [], total: 0 })
   const [loadState, setLoadState] = useState({ loading: true, error: null })
@@ -177,7 +187,7 @@ export default function AssessmentsTab({ learner, onChanged }) {
                 expanded && (
                   <tr key={`${a.id}-details`}>
                     <td className="p-0" colSpan={5}>
-                      <AssessmentDetails assessment={a} canDelete={canDelete} canWrite={canWrite} onChanged={(_, text) => refresh(text)} />
+                      <AssessmentDetails assessment={a} canDelete={canDelete} canManageStatus={canManageStatus} canWrite={canWrite} onChanged={(_, text) => refresh(text)} />
                     </td>
                   </tr>
                 ),
