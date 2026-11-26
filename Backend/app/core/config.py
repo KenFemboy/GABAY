@@ -81,6 +81,9 @@ class Settings(BaseSettings):
     )
     embedding_cache_dir: str = Field(default=".models", validation_alias="EMBEDDING_CACHE_DIR")
 
+    # Printed on generated documents such as the IEP (Stage 9).
+    school_name: str = Field(default="Sample School", validation_alias="SCHOOL_NAME")
+
     # Goal matching (Stage 8).
     match_min_score: float = Field(default=0.35, ge=0, le=1, validation_alias="MATCH_MIN_SCORE")
     match_top_k: int = Field(default=5, ge=1, le=20, validation_alias="MATCH_TOP_K")

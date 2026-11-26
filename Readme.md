@@ -351,6 +351,45 @@ Endpoints:
 - `POST /api/learners/{id}/recommendations` (manual add), `DELETE /api/recommendations/{id}`
   (manual goals only)
 
+## IEP builder
+
+The **IEP** tab on the learner profile lists every IEP version.
+
+**Creating a draft:** **Create IEP** makes a draft for the learner's school year and imports:
+- every **approved finding** (present levels, strengths, needs, diagnosis, recommendations);
+- every **accepted goal** from Goal suggestions, with its edited wording and target.
+
+Both are saved as copies, so later re-extraction or goal-bank edits never change a saved IEP.
+**Re-import** adds anything approved or accepted since; it never adds duplicates.
+
+**What each goal holds:** statement, the need it addresses, baseline, target value, unit and
+criterion, measurement method, responsible staff, start and target dates, and progress-review
+dates. Default dates follow a June–May school year, with quarterly reviews.
+
+**Before finalizing**, the checklist must be empty:
+- **IEP:** valid dates, an annual review inside the period, at least one present level or need,
+  at least one goal, and a team member with a name and role.
+- **Each goal:** statement, measurement, baseline, target and unit, responsible staff, a target
+  date inside the period, and review dates inside the period and on or before the target date.
+- **Amendments:** a reason.
+
+**Rules:**
+- Only the SNED Coordinator finalizes. The Coordinator and assigned Teachers edit drafts; the
+  School Head can view and download.
+- A **finalized IEP is read-only in the API**: every change returns 409 `iep_read_only`.
+- **Amend** (Coordinator, with a reason) copies the finalized version into a new draft version.
+  Finalizing that version marks the previous one **Superseded**.
+- **Download DOCX** generates a Word document from the saved record each time. Drafts carry a
+  "DRAFT – NOT FINAL" banner. `SCHOOL_NAME` in `Backend/.env` sets the school name printed on it.
+
+Endpoints:
+- `GET/POST /api/learners/{id}/ieps`
+- `GET/PATCH/DELETE /api/ieps/{id}`, `POST /api/ieps/{id}/import`
+- `POST/PATCH/DELETE /api/ieps/{id}/findings[/{fid}]`
+- `POST/PATCH/DELETE /api/ieps/{id}/goals[/{gid}]`, `PUT /api/ieps/{id}/goals/order`
+- `GET /api/ieps/{id}/validation`, `POST /api/ieps/{id}/finalize`, `POST /api/ieps/{id}/amend`
+- `GET /api/ieps/{id}/document` (DOCX)
+
 ## Validation
 
 ```powershell

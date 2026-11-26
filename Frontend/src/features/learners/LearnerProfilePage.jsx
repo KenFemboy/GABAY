@@ -7,6 +7,7 @@ import Alert from '../../shared/components/Alert'
 import { primaryButtonClass, secondaryButtonClass } from '../../shared/forms/styles'
 import { getErrorMessage } from '../../shared/utils/apiError'
 import AssessmentsTab from '../assessments/AssessmentsTab'
+import IepTab from '../iep/IepTab'
 import AssignmentsPanel from './AssignmentsPanel'
 import { GRADE_LABELS, LEARNER_EDITOR_ROLES, PROFILE_TABS, SEX_LABELS } from './constants'
 import LearnerForm from './LearnerForm'
@@ -181,6 +182,8 @@ function LearnerProfile({ learnerId }) {
         <div className="px-6" role="tabpanel">
           {activeTab === 'assessments' ? (
             <AssessmentsTab learner={learner} onChanged={reloadSummary} />
+          ) : activeTab === 'iep' ? (
+            <IepTab learner={learner} onChanged={reloadSummary} />
           ) : (
             <ModuleTab
               label={PROFILE_TABS.find((t) => t.key === activeTab).label}

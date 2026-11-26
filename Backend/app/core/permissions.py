@@ -77,3 +77,6 @@ require_status_managers = require_roles(Role.SNED_COORDINATOR)
 require_extraction_approvers = require_roles(Role.SNED_COORDINATOR)
 # Goal bank (Stage 7): only the Coordinator manages goals and the taxonomy.
 require_goal_managers = require_roles(Role.SNED_COORDINATOR)
+# IEP (Stage 9): drafts are edited by require_assessment_writers; only the Coordinator
+# finalizes and starts amendments.
+require_iep_finalizers = require_roles(Role.SNED_COORDINATOR)

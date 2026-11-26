@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.core.config import get_settings
 from app.core.errors import APIError
 from app.db.session import engine
-from app.routers import assessments, auth, extractions, files, goals, learners, matching, users
+from app.routers import assessments, auth, extractions, files, goals, iep, learners, matching, users
 from app.services.ocr_service import tesseract_status
 
 settings = get_settings()
@@ -39,7 +39,7 @@ def error_response(
 
 @app.exception_handler(APIError)
 async def api_error_handler(request: Request, exc: APIError) -> JSONResponse:
-    return error_response(exc.code, exc.message, exc.status_code, headers=exc.headers)
+    return error_response(exc.code, exc.message, exc.status_code, details=exc.details, headers=exc.headers)
 
 
 @app.exception_handler(HTTPException)
@@ -70,6 +70,7 @@ app.include_router(files.router)
 app.include_router(extractions.router)
 app.include_router(goals.router)
 app.include_router(matching.router)
+app.include_router(iep.router)
 
 
 @app.get("/api/health")

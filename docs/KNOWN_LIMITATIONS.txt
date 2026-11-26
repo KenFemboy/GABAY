@@ -1,6 +1,6 @@
 GABAY - Known limitations and follow-ups
 =========================================
-Stages 3 to 8. Last updated 2026-11-26.
+Stages 3 to 9. Last updated 2026-11-26.
 
 This file is a to-do list for later. Each item says what the limit is and, where there is one,
 what to do about it. Update the file when an item is fixed or a new limit is found.
@@ -386,6 +386,54 @@ Behaviour to know
   after a restart takes a few seconds to load it.
 - AUDIT LOGGING IS NOT DONE YET (Stage 14). Each recommendation records who decided and when.
   Nothing else is logged.
+
+
+-------------------------------------------------------------------------------
+STAGE 9 - IEP BUILDER
+-------------------------------------------------------------------------------
+
+Not yet confirmed or checked
+- Migration 0009 has NOT been run on the development database yet. Run "alembic upgrade head"
+  (it only creates the three new IEP tables).
+- The DOCX layout is the developer's DepEd-style design, NOT an official DepEd or school form.
+  The section names, the "Republic of the Philippines · Department of Education" header line
+  and the signature block should be confirmed with the SNED Coordinator. The generated file has
+  been checked by reading its text in the tests, but has not been opened and checked visually
+  in Word.
+- The IEP screens have not been clicked through in a browser.
+
+Document
+- DOCX only (no PDF). Staff can print or "Save as PDF" from Word or Google Docs.
+- The document is generated each time it is downloaded and is not stored. A finalized IEP
+  cannot change, so it always produces the same content, but the "Generated on" date in the
+  footer changes.
+- Signatures are printed lines only. There are no e-signatures and no record of who signed.
+- Word fills in "Page X of Y" when the file is opened. Some viewers show "1" until the fields
+  are updated.
+
+Versioning and rules
+- One IEP series per learner per school year (taken from the learner's CURRENT school year).
+  For a new school year, change the learner's school year first, then create a new IEP.
+- Only one draft per learner and school year. An amendment can be started only from the
+  current finalized version.
+- Superseded and finalized versions are never deleted. Discarding is allowed for drafts only.
+- Findings and goals are copies. If extraction or the goal bank changes after an IEP is
+  finalized, the IEP keeps its old text. Use an amendment and Re-import to bring in new items.
+- Re-import adds only NEW approved findings and accepted goals. It does not remove items that
+  were rejected later, and it does not update the text of items already in the IEP.
+- Every goal taken from the goal bank or from an accepted suggestion records a goal-bank usage
+  ("iep_goal"), which locks that goal version in the bank (Stage 7 rule).
+
+Validation limits
+- Validation checks that required fields are present and that dates are consistent. It does
+  not judge quality (for example, whether a baseline is really measurable).
+- Default dates assume a June–May school year (start = today or 1 June, end = 31 May, annual
+  review two weeks before the end, quarterly review dates).
+- Team members are free text (name and role), not linked user accounts. "Responsible staff" on
+  goals is also free text.
+- Progress monitoring against the review dates is a later stage (Stage 10).
+- AUDIT LOGGING IS NOT DONE YET (Stage 14). Each version records who created and who finalized
+  it. Edits to drafts are not logged.
 
 
 -------------------------------------------------------------------------------

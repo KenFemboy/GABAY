@@ -13,12 +13,15 @@ class APIError(Exception):
         code: str,
         message: str,
         headers: dict[str, str] | None = None,
+        details: list[dict] | None = None,
     ) -> None:
         super().__init__(message)
         self.status_code = status_code
         self.code = code
         self.message = message
         self.headers = headers
+        # Optional [{"field": ..., "message": ...}] list, same shape as validation errors.
+        self.details = details
 
 
 def not_authenticated(code: str = "not_authenticated", message: str = "Authentication is required.") -> APIError:

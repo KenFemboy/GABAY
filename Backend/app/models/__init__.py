@@ -17,6 +17,7 @@ from app.models.goal import (
     GoalUsage,
     GoalVersion,
 )
+from app.models.iep import Iep, IepFinding, IepGoal, IepGoalSource, IepStatus
 from app.models.matching import (
     GoalRecommendation,
     MatchingRun,
@@ -50,6 +51,11 @@ __all__ = [
     "GoalUsage",
     "GoalVersion",
     "GradeLevel",
+    "Iep",
+    "IepFinding",
+    "IepGoal",
+    "IepGoalSource",
+    "IepStatus",
     "ProcessingStatus",
     "Learner",
     "LearnerAssignment",
