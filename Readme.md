@@ -276,6 +276,81 @@ Endpoints:
 - `GET /api/goals/index-status`, `POST /api/goals/reindex`
 - `GET /api/goals/search?q=`
 
+## Semantic goal matching
+
+**Goal suggestions** (a button on the learner profile) matches each **approved need** of the
+learner against the **active** goal bank.
+
+**How a run works:**
+- Each need is embedded with the same model as the goals (see
+  `docs/decisions/0001-embedding-model.md`).
+- PostgreSQL finds the closest goals with **pgvector**: cosine distance, HNSW index.
+- Filters: only goals in the need's **domain**, and only goals for the learner's **grade band**.
+  Both are on by default and can be switched off per run.
+- Goals below a **minimum similarity** are left out (`MATCH_MIN_SCORE`, default 0.35). The top
+  `MATCH_TOP_K` (default 5) are kept.
+- Each suggestion is saved with its **score, rank and model version**.
+
+**What staff can do:**
+- **Accept**, **Edit & accept** (learner-specific wording; the goal bank is not changed),
+  **Reject** (with an optional reason), **Undo**, or **add a goal manually** from the bank.
+- Accepting a goal locks its goal-bank version, so later bank edits create a new version.
+- Running matching again keeps earlier decisions. **Selected goals** (the accepted ones) are what
+  the IEP stage will use.
+- The Coordinator and assigned Teachers can run matching and decide; the School Head can only
+  view.
+
+### Install pgvector (Windows, PostgreSQL 18)
+
+pgvector has no official Windows installer. Use one of these:
+
+1. **Prebuilt (community build):** download the PostgreSQL 18 zip of release **0.8.7** from
+   https://github.com/andreiramani/pgvector_pgsql_windows/releases. Then, **as Administrator**:
+   - copy `vector.dll` into `C:\Program Files\PostgreSQL\18\lib`;
+   - copy `vector.control` and all `vector--*.sql` files into
+     `C:\Program Files\PostgreSQL\18\share\extension`.
+
+   This build is not made by the pgvector project.
+2. **Build from source** (official). In the *x64 Native Tools Command Prompt for VS*, run as
+   Administrator:
+   ```bat
+   set "PGROOT=C:\Program Files\PostgreSQL\18"
+   cd %TEMP%
+   git clone --branch v0.8.7 https://github.com/pgvector/pgvector.git
+   cd pgvector
+   nmake /F Makefile.win
+   nmake /F Makefile.win install
+   ```
+
+Then, from `Backend/`, run `alembic upgrade head`. Migration 0008 runs `CREATE EXTENSION vector`
+and moves the goal vectors into a `vector(384)` column. `GET /api/config/status` should then show
+`"pgvector": "0.8.7"`.
+
+Other setups:
+- Docker: use the `pgvector/pgvector:pg18` image.
+- Supabase: enable the `vector` extension under Database → Extensions.
+
+The automated tests use SQLite, where the same search runs in numpy.
+
+### Benchmark
+
+```powershell
+cd Backend
+python -m app.scripts.benchmark_matching --out ..\docs\benchmarks
+```
+
+The benchmark has 68 synthetic needs: English, Filipino and OCR-style errors. Latest results with
+the chosen model: **top-5 accuracy 97.1%**, top-1 79.4%, MRR 0.858 (domain filter on). With the
+domain filter off, top-5 is also 97.1% against a random-ranking baseline of 15%. Filipino-only
+needs score lowest, at 80% top-5. Full reports are in `docs/benchmarks/`.
+
+Endpoints:
+- `POST/GET /api/learners/{id}/matching-runs`, `GET /api/matching-runs/{id}`
+- `GET /api/learners/{id}/recommendations/latest`, `GET /api/learners/{id}/selected-goals`
+- `POST /api/recommendations/{id}/accept|reject|reset`, `PATCH /api/recommendations/{id}`
+- `POST /api/learners/{id}/recommendations` (manual add), `DELETE /api/recommendations/{id}`
+  (manual goals only)
+
 ## Validation
 
 ```powershell

@@ -18,12 +18,13 @@ from pathlib import Path
 from typing import Protocol
 
 import numpy as np
-from sqlalchemy import delete, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.errors import APIError
-from app.models.goal import Goal, GoalEmbedding, GoalStatus, GoalVersion
+from app.db.vector import EMBEDDING_DIMS, cosine_distance
+from app.models.goal import Goal, GoalDomain, GoalEmbedding, GoalStatus, GoalVersion
 
 logger = logging.getLogger(__name__)
 
@@ -112,12 +113,14 @@ def text_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def to_bytes(vector: np.ndarray) -> bytes:
-    return np.asarray(vector, dtype=np.float32).tobytes()
-
-
-def from_bytes(data: bytes) -> np.ndarray:
-    return np.frombuffer(data, dtype=np.float32)
+def check_dims(vectors: np.ndarray) -> np.ndarray:
+    """The vector columns are vector(EMBEDDING_DIMS); refuse a model with other dimensions."""
+    if vectors.ndim != 2 or vectors.shape[1] != EMBEDDING_DIMS:
+        raise EmbeddingUnavailable(
+            f"The embedding model returns {vectors.shape[-1]}-dimensional vectors, but the database "
+            f"stores {EMBEDDING_DIMS}. Choose a {EMBEDDING_DIMS}-dimensional model or migrate the columns."
+        )
+    return vectors
 
 
 # --- Indexing ------------------------------------------------------------------
@@ -175,7 +178,7 @@ def reindex(db: Session, embedder: Embedder) -> dict[str, int]:
     created = updated = 0
     for start in range(0, len(todo), BATCH_SIZE):
         batch = todo[start:start + BATCH_SIZE]
-        vectors = embedder.embed([text for _, text, _ in batch])
+        vectors = check_dims(embedder.embed([text for _, text, _ in batch]))
         for (version, _, digest), vector in zip(batch, vectors, strict=True):
             row = existing.get(version.id)
             if row is None:
@@ -185,14 +188,14 @@ def reindex(db: Session, embedder: Embedder) -> dict[str, int]:
                         model=embedder.model,
                         text_hash=digest,
                         dims=int(vector.shape[0]),
-                        vector=to_bytes(vector),
+                        vector=vector,
                     )
                 )
                 created += 1
             else:
                 row.text_hash = digest
                 row.dims = int(vector.shape[0])
-                row.vector = to_bytes(vector)
+                row.vector = vector
                 updated += 1
 
     # Remove vectors that are no longer wanted: other models, archived goals, old versions.
@@ -224,23 +227,77 @@ def reindex_if_needed(db: Session, embedder: Embedder) -> dict[str, int] | None:
 
 
 @dataclass
+class VectorHit:
+    goal: Goal
+    version: GoalVersion
+    score: float  # cosine similarity, 1.0 = identical direction
+
+
+def vector_search(
+    db: Session,
+    query_vec: np.ndarray,
+    *,
+    model: str,
+    k: int,
+    min_score: float | None = None,
+    domain_code: str | None = None,
+    grade_band: str | None = None,
+) -> list[VectorHit]:
+    """Top-k ACTIVE goals (current versions only) by cosine similarity.
+
+    PostgreSQL: one pgvector query (``<=>`` cosine distance, HNSW index).
+    SQLite (tests): the same filters with numpy. Both return the same scores.
+    """
+    query_vec = np.asarray(query_vec, dtype=np.float32).reshape(-1)
+    if query_vec.shape[0] != EMBEDDING_DIMS:
+        raise EmbeddingUnavailable("The query vector has the wrong number of dimensions.")
+
+    filters = [Goal.status == GoalStatus.ACTIVE.value, GoalEmbedding.model == model]
+    if domain_code:
+        filters.append(GoalDomain.code == domain_code)
+    if grade_band:
+        filters.append(or_(GoalVersion.grade_band == grade_band, GoalVersion.grade_band == "any"))
+
+    def base(*columns):
+        return (
+            select(*columns)
+            .select_from(Goal)
+            .join(GoalVersion, GoalVersion.id == Goal.current_version_id)
+            .join(GoalEmbedding, GoalEmbedding.goal_version_id == GoalVersion.id)
+            .join(GoalDomain, GoalDomain.id == GoalVersion.domain_id)
+            .where(*filters)
+        )
+
+    if db.get_bind().dialect.name == "postgresql":
+        distance = cosine_distance(GoalEmbedding.vector, query_vec, EMBEDDING_DIMS)
+        score = (1 - distance).label("score")
+        query = base(Goal.id, GoalVersion.id, score).order_by(distance, Goal.id).limit(k)
+        if min_score is not None:
+            query = query.where(1 - distance >= min_score)
+        ranked = [(gid, vid, float(sc)) for gid, vid, sc in db.execute(query).all()]
+    else:
+        rows = db.execute(base(Goal.id, GoalVersion.id, GoalEmbedding.vector)).all()
+        if not rows:
+            return []
+        matrix = np.vstack([np.asarray(r[2], dtype=np.float32) for r in rows])
+        scores = matrix @ query_vec
+        order = sorted(range(len(rows)), key=lambda i: (-scores[i], rows[i][0]))
+        ranked = [
+            (rows[i][0], rows[i][1], float(scores[i]))
+            for i in order
+            if min_score is None or scores[i] >= min_score
+        ][:k]
+    return [VectorHit(goal=db.get(Goal, gid), version=db.get(GoalVersion, vid), score=sc) for gid, vid, sc in ranked]
+
+
+@dataclass
 class SearchHit:
     goal: Goal
     score: float
 
 
 def search(db: Session, query: str, embedder: Embedder, k: int = 10) -> list[SearchHit]:
-    rows = db.execute(
-        select(GoalEmbedding, Goal)
-        .join(Goal, Goal.current_version_id == GoalEmbedding.goal_version_id)
-        .where(Goal.status == GoalStatus.ACTIVE.value, GoalEmbedding.model == embedder.model)
-    ).unique().all()
-    if not rows:
-        return []
-    matrix = np.vstack([from_bytes(r.GoalEmbedding.vector) for r in rows])
-    query_vec = embedder.embed([query])[0]
-    if query_vec.shape[0] != matrix.shape[1]:
-        raise EmbeddingUnavailable("Stored vectors do not match the model; run reindex.")
-    scores = matrix @ query_vec
-    order = np.argsort(-scores)[:k]
-    return [SearchHit(goal=rows[i].Goal, score=float(scores[i])) for i in order]
+    """Free-text "Find similar" over active goals (Goal bank page)."""
+    query_vec = check_dims(embedder.embed([query]))[0]
+    hits = vector_search(db, query_vec, model=embedder.model, k=k)
+    return [SearchHit(goal=h.goal, score=h.score) for h in hits]

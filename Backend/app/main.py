@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.core.config import get_settings
 from app.core.errors import APIError
 from app.db.session import engine
-from app.routers import assessments, auth, extractions, files, goals, learners, users
+from app.routers import assessments, auth, extractions, files, goals, learners, matching, users
 from app.services.ocr_service import tesseract_status
 
 settings = get_settings()
@@ -69,6 +69,7 @@ app.include_router(assessments.router)
 app.include_router(files.router)
 app.include_router(extractions.router)
 app.include_router(goals.router)
+app.include_router(matching.router)
 
 
 @app.get("/api/health")
@@ -101,4 +102,18 @@ def config_status() -> dict:
         "database_configured": bool(settings.database_url),
         "storage_backend": settings.storage_backend,
         **tesseract_status(settings),
+        "pgvector": pgvector_version(),
     }
+
+
+def pgvector_version() -> str | None:
+    """Installed pgvector version, or None (not PostgreSQL, not installed, or DB down)."""
+    try:
+        with engine.connect() as connection:
+            if connection.dialect.name != "postgresql":
+                return None
+            return connection.execute(
+                text("SELECT extversion FROM pg_extension WHERE extname = 'vector'")
+            ).scalar()
+    except SQLAlchemyError:
+        return None

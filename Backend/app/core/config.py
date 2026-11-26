@@ -81,6 +81,10 @@ class Settings(BaseSettings):
     )
     embedding_cache_dir: str = Field(default=".models", validation_alias="EMBEDDING_CACHE_DIR")
 
+    # Goal matching (Stage 8).
+    match_min_score: float = Field(default=0.35, ge=0, le=1, validation_alias="MATCH_MIN_SCORE")
+    match_top_k: int = Field(default=5, ge=1, le=20, validation_alias="MATCH_TOP_K")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -4,7 +4,7 @@ import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { getLearnerSummary, updateLearner } from '../../api/learnersApi'
 import useAuth from '../../auth/useAuth'
 import Alert from '../../shared/components/Alert'
-import { secondaryButtonClass } from '../../shared/forms/styles'
+import { primaryButtonClass, secondaryButtonClass } from '../../shared/forms/styles'
 import { getErrorMessage } from '../../shared/utils/apiError'
 import AssessmentsTab from '../assessments/AssessmentsTab'
 import AssignmentsPanel from './AssignmentsPanel'
@@ -138,11 +138,14 @@ function LearnerProfile({ learnerId }) {
               ))}
             </dl>
           </div>
-          {canEdit && !editing && (
-            <button className={secondaryButtonClass} onClick={() => { setMessage(null); setEditing(true) }} type="button">
-              Edit learner
-            </button>
-          )}
+          <div className="flex flex-wrap gap-2">
+            <Link className={primaryButtonClass} to={`/learners/${learner.id}/goals`}>Goal suggestions</Link>
+            {canEdit && !editing && (
+              <button className={secondaryButtonClass} onClick={() => { setMessage(null); setEditing(true) }} type="button">
+                Edit learner
+              </button>
+            )}
+          </div>
         </div>
         {editing && (
           <div className="mt-6 border-t border-slate-200 pt-6">

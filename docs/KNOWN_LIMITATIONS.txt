@@ -1,6 +1,6 @@
 GABAY - Known limitations and follow-ups
 =========================================
-Stages 3 to 7. Last updated 2026-11-26.
+Stages 3 to 8. Last updated 2026-11-26.
 
 This file is a to-do list for later. Each item says what the limit is and, where there is one,
 what to do about it. Update the file when an item is fixed or a new limit is found.
@@ -329,6 +329,63 @@ Versioning and status
 - There is no CSV import or export for goals yet.
 - AUDIT LOGGING IS NOT DONE YET (Stage 14). Each version records who created it, but nothing
   records who activated or archived a goal.
+- (Stage 8) Goal vectors moved from bytes to a pgvector column in migration 0008. Find similar
+  now uses the same pgvector search as matching.
+
+
+-------------------------------------------------------------------------------
+STAGE 8 - SEMANTIC GOAL MATCHING
+-------------------------------------------------------------------------------
+
+Not yet confirmed or checked
+- PGVECTOR IS NOT INSTALLED YET on the development database (PostgreSQL 18 on Windows), so
+  migration 0008 has NOT been run against PostgreSQL, and the pgvector SQL search has not run
+  on a real database. Install it (README: "Install pgvector"), then run "alembic upgrade head".
+  The optional test tests/test_matching.py::test_pgvector_search_matches_numpy checks that the
+  SQL search returns the same results as the numpy search. It runs only when TEST_PG_URL points
+  to a THROWAWAY database, because it drops and recreates every table there.
+- The prebuilt Windows pgvector (andreiramani/pgvector_pgsql_windows) is a community build, not
+  made by the pgvector project. For production, prefer Linux/Docker (pgvector/pgvector image)
+  or a managed Postgres with pgvector.
+- The Goal suggestions page has not been clicked through in a browser.
+
+Benchmark and accuracy
+- The benchmark (app/data/matching_benchmark.json, 68 needs) is SYNTHETIC and was written by
+  the developer, who also wrote the starter goals. It probably overstates real accuracy. The
+  SNED Coordinator should review it and add real, anonymised needs.
+- With the domain filter on, a need only competes with the goals of one domain and grade band
+  (median 6), so top-5 accuracy is high even for random ordering (82%). The "domain filter
+  off" numbers (97% versus 15% for random) better show what the model adds.
+- Filipino-only needs match worst (80% top-5). Both misses were Filipino ("magbawas",
+  "mainip").
+- MATCH_MIN_SCORE (0.35) and MATCH_TOP_K (5) were chosen on the synthetic benchmark only.
+- If a finding has the wrong domain (Stage 6 guesses domains), the domain filter hides the
+  right goals. Switch the filter off for that run, or fix the domain in a new extraction
+  version.
+- Similarity is only a suggestion. Nothing is added to a learner without a person accepting
+  it.
+
+Behaviour to know
+- Only approved NEED findings are matched. Strengths, present levels and recommendations are
+  not.
+- Matching only sees ACTIVE goals. Draft starter goals are invisible until the Coordinator
+  activates them.
+- Each run saves new suggestion rows. Earlier accept and reject decisions (and edited wording)
+  are copied into the new run for the same need and goal version. "Selected goals" = accepted
+  suggestions of the LATEST run + accepted manual additions. Older runs are kept as history.
+- Accepting a goal records a goal-bank usage (goal_usages), which permanently locks that goal
+  version: later edits in the goal bank create a new version (Stage 7 rule). Undo does not
+  remove the usage.
+- Edited wording (statement, target, criterion) is stored on the recommendation for this
+  learner only. The goal bank is not changed.
+- If the goal bank changes after a run (a goal archived or a new version), old suggestions
+  still point at the version they were made for. Run matching again to see the current bank.
+- A finding has only one domain, so a need that spans two domains (for example reading and
+  behavior) matches in one of them only, unless the domain filter is switched off.
+- The model runs inside the API process for matching runs and Find similar. The first run
+  after a restart takes a few seconds to load it.
+- AUDIT LOGGING IS NOT DONE YET (Stage 14). Each recommendation records who decided and when.
+  Nothing else is logged.
 
 
 -------------------------------------------------------------------------------

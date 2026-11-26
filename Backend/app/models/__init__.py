@@ -17,6 +17,13 @@ from app.models.goal import (
     GoalUsage,
     GoalVersion,
 )
+from app.models.matching import (
+    GoalRecommendation,
+    MatchingRun,
+    NeedEmbedding,
+    RecommendationSource,
+    RecommendationStatus,
+)
 from app.models.ocr import OcrJob, OcrJobStatus, OcrPage, OcrPageSource, OcrPageStatus
 from app.models.learner import GradeLevel, Learner, LearnerAssignment, LearnerStatus, Sex
 from app.models.user import Role, User, UserStatus
@@ -33,6 +40,11 @@ __all__ = [
     "Goal",
     "GoalDomain",
     "GoalEmbedding",
+    "GoalRecommendation",
+    "MatchingRun",
+    "NeedEmbedding",
+    "RecommendationSource",
+    "RecommendationStatus",
     "GoalSkill",
     "GoalStatus",
     "GoalUsage",

@@ -21,7 +21,7 @@ from app.services.embedding_service import get_embedder
 class FakeEmbedder:
     """Deterministic bag-of-words hashing embedder: shared words -> similar vectors."""
 
-    model = "fake-bow-64"
+    model = "fake-bow-384"
 
     def __init__(self):
         self.calls = 0
@@ -30,11 +30,11 @@ class FakeEmbedder:
     def embed(self, texts):
         self.calls += 1
         self.texts.extend(texts)
-        out = np.zeros((len(texts), 64), dtype=np.float32)
+        out = np.zeros((len(texts), 384), dtype=np.float32)
         for i, text in enumerate(texts):
             for word in re.findall(r"[a-z]+", text.lower()):
                 if len(word) > 3:
-                    out[i, int(hashlib.md5(word.encode()).hexdigest(), 16) % 64] += 1
+                    out[i, int(hashlib.md5(word.encode()).hexdigest(), 16) % 384] += 1
         return embedding_service._normalize(out)
 
 
@@ -287,7 +287,7 @@ def test_reindex_is_idempotent_and_tracks_changes(client, coord_headers, taxonom
     activate(client, coord_headers, b["id"])
 
     status = client.get("/api/goals/index-status", headers=coord_headers).json()
-    assert status == {"model": "fake-bow-64", "active_goals": 2, "indexed": 0, "missing_or_stale": 2}
+    assert status == {"model": "fake-bow-384", "active_goals": 2, "indexed": 0, "missing_or_stale": 2}
 
     first = client.post("/api/goals/reindex", headers=coord_headers).json()
     assert (first["created"], first["updated"], first["unchanged"], first["removed"]) == (2, 0, 0, 0)

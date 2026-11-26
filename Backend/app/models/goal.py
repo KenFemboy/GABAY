@@ -17,7 +17,6 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
-    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -26,6 +25,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, in_list
+from app.db.vector import EMBEDDING_DIMS, EmbeddingVector
 from app.models.user import User
 
 
@@ -205,7 +205,8 @@ class GoalEmbedding(Base):
     # SHA-256 of the exact text that was embedded; a mismatch means "stale".
     text_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     dims: Mapped[int] = mapped_column(Integer, nullable=False)
-    vector: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)  # float32, L2-normalised
+    # pgvector vector(384) on PostgreSQL; float32 bytes on SQLite. L2-normalised.
+    vector: Mapped[object] = mapped_column(EmbeddingVector(EMBEDDING_DIMS), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
