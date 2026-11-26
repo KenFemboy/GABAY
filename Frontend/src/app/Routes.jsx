@@ -4,6 +4,7 @@ import ProtectedRoute from '../auth/ProtectedRoute'
 import { ROLES } from '../auth/roles'
 import ChangePasswordPage from '../features/auth/ChangePasswordPage'
 import LoginPage from '../features/auth/LoginPage'
+import AnalysisPage from '../features/assessments/AnalysisPage'
 import OcrReviewPage from '../features/assessments/OcrReviewPage'
 import DashboardPage from '../features/dashboard/DashboardPage'
 import { LEARNER_READER_ROLES } from '../features/learners/constants'
@@ -30,6 +31,7 @@ export default function Routes() {
             <Route element={<LearnersPage />} path="/learners" />
             <Route element={<LearnerProfilePage />} path="/learners/:learnerId" />
             <Route element={<OcrReviewPage />} path="/learners/:learnerId/assessments/:assessmentId/review" />
+            <Route element={<AnalysisPage />} path="/learners/:learnerId/assessments/:assessmentId/analysis" />
           </Route>
 
           <Route element={<ProtectedRoute roles={[ROLES.SYSTEM_ADMIN]} />}>

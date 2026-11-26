@@ -16,6 +16,9 @@ Expected result after uploading and clicking "Process document"
     05_filipino_notes.png        Processed      mixed English/Filipino text (eng+fil)
     06_broken.pdf                Uploaded +     passes the upload check but cannot be opened;
                                  error shown    processing fails with a clear message
+    07_formal_psych_report.pdf   Processed      psychologist report with Diagnosis, Strengths,
+                                                Needs, Present level and Recommendations sections
+                                                (for Stage 6 extraction)
 """
 
 import argparse
@@ -89,6 +92,51 @@ FILIPINO_NOTES = [
     "singing and drawing. Needs reminders to stay on task.",
     "",
     "Rekomendasyon: Dagdag na pagsasanay sa pagbasa araw-araw.",
+]
+
+FORMAL_REPORT_PAGES = [
+    [
+        "PSYCHOLOGICAL EVALUATION REPORT",
+        "",
+        "Name: Sample Learner B          Age: 9 years 2 months          Grade: 3",
+        "Date of Evaluation: July 15, 2025",
+        "Examiner: Licensed Psychologist (sample)",
+        "",
+        "REASON FOR REFERRAL",
+        "Referred by the section adviser because of difficulty in reading and in following",
+        "group routines.",
+        "",
+        "I. DIAGNOSIS",
+        "Diagnostic Impression: Autism Spectrum Disorder, Level 1, with language delay.",
+        "",
+        "II. STRENGTHS",
+        "- Strong visual memory and attention to detail.",
+        "- Recognizes numbers up to 100 and enjoys solving puzzles.",
+        "- Follows a visual schedule with minimal prompting.",
+        "",
+        "III. NEEDS",
+        "- Difficulty starting and keeping conversations with peers.",
+        "- Reading comprehension is below grade level.",
+        "- Needs support during transitions between activities.",
+    ],
+    [
+        "IV. PRESENT LEVEL OF PERFORMANCE",
+        "Reading: Decodes two-syllable words. Answers literal questions but has difficulty",
+        "with inferential questions.",
+        "Mathematics: Adds and subtracts two-digit numbers without regrouping.",
+        "Communication: Uses short phrases and often echoes a question before answering it.",
+        "Behavior: Becomes upset when the daily routine changes without warning.",
+        "Motor: Fine motor skills are within the expected range for age.",
+        "",
+        "V. RECOMMENDATIONS",
+        "1. Inclusion in a regular class with SNED support for reading.",
+        "2. Speech and language therapy once a week.",
+        "3. Social skills training in small groups.",
+        "4. Use of visual schedules and advance notice of changes in routine.",
+        "5. Re-evaluation after one school year.",
+        "",
+        "Prepared by: Licensed Psychologist (sample)",
+    ],
 ]
 
 # --- Helpers -----------------------------------------------------------------
@@ -212,6 +260,9 @@ def make_samples(out: Path) -> list[Path]:
 
     # 5. Mixed Filipino/English notes as a PNG.
     render_page(FILIPINO_NOTES).save(write("05_filipino_notes.png"), format="PNG")
+
+    # 7. Formal psychologist report (digital PDF) with every extraction category.
+    write("07_formal_psych_report.pdf").write_bytes(text_layer_pdf(FORMAL_REPORT_PAGES))
 
     # 6. Broken PDF: starts with %PDF- so it passes upload checks, but is not a real PDF.
     write("06_broken.pdf").write_bytes(b"%PDF-1.4\nThis file is damaged on purpose.\n")

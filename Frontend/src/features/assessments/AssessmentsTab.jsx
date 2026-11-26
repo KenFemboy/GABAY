@@ -109,9 +109,20 @@ function AssessmentDetails({ assessment, canWrite, canDelete, canManageStatus, o
       )}
       {doc && (canWrite || REVIEWABLE_STATUSES.includes(assessment.processing_status)) && (
         <div className="flex flex-wrap gap-2">
-          {REVIEWABLE_STATUSES.includes(assessment.processing_status) && (
+          {assessment.processing_status === 'finalized' && (
             <Link
               className={`${primaryButtonClass} px-3 py-1 text-sm`}
+              to={`/learners/${assessment.learner_id}/assessments/${assessment.id}/analysis`}
+            >
+              Analysis
+              {assessment.approved_findings_count > 0 && (
+                <span className="ml-2 rounded-full bg-white/20 px-2 text-xs">{assessment.approved_findings_count} approved</span>
+              )}
+            </Link>
+          )}
+          {REVIEWABLE_STATUSES.includes(assessment.processing_status) && (
+            <Link
+              className={`${assessment.processing_status === 'finalized' ? secondaryButtonClass : primaryButtonClass} px-3 py-1 text-sm`}
               to={`/learners/${assessment.learner_id}/assessments/${assessment.id}/review`}
             >
               Review text

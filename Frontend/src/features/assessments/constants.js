@@ -54,3 +54,36 @@ export function pageSourceLabel(page) {
   if (page.source === 'text_layer') return 'PDF text'
   return page.confidence == null ? 'OCR' : `OCR · ${Math.round(page.confidence)}%`
 }
+
+// Information extraction (Stage 6). Values must match Backend/app/services/extraction/schema.py.
+export const FINDING_CATEGORIES = [
+  { value: 'diagnosis', label: 'Diagnosis', hint: 'Only from an explicit diagnosis or impression in the report.' },
+  { value: 'strength', label: 'Strengths' },
+  { value: 'need', label: 'Needs' },
+  { value: 'present_level', label: 'Present levels of performance' },
+  { value: 'recommendation', label: 'Recommendations' },
+]
+
+export const FINDING_DOMAINS = [
+  { value: 'reading', label: 'Reading' },
+  { value: 'writing', label: 'Writing' },
+  { value: 'mathematics', label: 'Mathematics' },
+  { value: 'behavior_social', label: 'Behavior / social' },
+  { value: 'communication', label: 'Communication' },
+  { value: 'motor', label: 'Motor' },
+  { value: 'self_help', label: 'Self-help' },
+  { value: 'cognitive', label: 'Cognitive' },
+  { value: 'other', label: 'Other' },
+]
+
+export const DOMAIN_LABELS = Object.fromEntries(FINDING_DOMAINS.map((d) => [d.value, d.label]))
+
+export const EXTRACTION_STATUS = {
+  draft: { label: 'Draft', className: 'bg-amber-100 text-amber-800' },
+  approved: { label: 'Approved', className: 'bg-emerald-100 text-emerald-700' },
+  superseded: { label: 'Superseded', className: 'bg-slate-200 text-slate-600' },
+}
+
+export const EXTRACTION_METHOD_LABELS = { rule: 'Rule-based', ai: 'AI', manual: 'Edited copy' }
+
+export const EXTRACTION_APPROVER_ROLES = [ROLES.SNED_COORDINATOR]

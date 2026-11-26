@@ -62,6 +62,15 @@ class Assessment(Base):
         lazy="selectin", order_by="desc(OcrJob.id)", viewonly=True
     )
 
+    # Read-only view used for the approved-findings count on the assessment list.
+    extraction_versions: Mapped[list["ExtractionVersion"]] = relationship(  # noqa: F821
+        lazy="selectin", viewonly=True
+    )
+
+    @property
+    def approved_findings_count(self) -> int:
+        return sum(len(v.findings) for v in self.extraction_versions if v.status == "approved")
+
     @property
     def created_by_name(self) -> str:
         return self.creator.name

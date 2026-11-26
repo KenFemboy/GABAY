@@ -1,6 +1,6 @@
 GABAY - Known limitations and follow-ups
 =========================================
-Stages 3 to 5. Last updated 2026-11-25.
+Stages 3 to 6. Last updated 2026-11-26.
 
 This file is a to-do list for later. Each item says what the limit is and, where there is one,
 what to do about it. Update the file when an item is fixed or a new limit is found.
@@ -228,6 +228,60 @@ Security and privacy
   SUPABASE_SERVICE_ROLE_KEY when using Supabase).
 - AUDIT LOGGING IS NOT DONE YET (Stage 14). Nothing records who started processing or who
   corrected the text, beyond reviewed_by on each page.
+
+
+-------------------------------------------------------------------------------
+STAGE 6 - INFORMATION EXTRACTION AND REVIEW
+-------------------------------------------------------------------------------
+
+Not yet done
+- OPTIONAL AI EXTRACTION IS NOT BUILT (the Stage 6 checklist item stays open). There is no
+  de-identification step either. To add it later:
+    1. Write an extractor class in app/services/extraction/ that follows the Extractor
+       interface (base.py) and returns an ExtractionResult (schema.py).
+    2. Replace the learner's name, code, birth date and other identifiers in the page text
+       before sending it, and map the source quotes back to page offsets by searching
+       for them in the original text.
+    3. Hook it up in registry.py behind EXTRACTION_AI_ENABLED.
+  The database already accepts method = 'ai'.
+- The Analysis page has not been clicked through in a browser.
+- The rules have only been tested on the synthetic sample reports (make_ocr_samples.py).
+  Real DepEd / psychologist report layouts may differ. Collect a few anonymised examples and
+  tune the heading and cue lists in rules.py.
+
+How the rules can go wrong
+- The rules depend on headings. A report with no headings, or headings the keyword list does
+  not know, gives few or no findings. Unknown sections (for example "Reason for referral",
+  "Tests administered") are skipped on purpose.
+- Strengths and needs inside domain sections are found with cue words ("difficulty",
+  "able to", "nahihirapan", "masigla", ...). This is a heuristic:
+    - A sentence with both kinds of cue counts as a need ("Works well in pairs but becomes
+      restless" -> need).
+    - Sentences with no cue word only appear inside the present-level finding.
+    - Negations are not understood ("does not have difficulty" -> need).
+- The same sentence can appear both in a present level and as a strength or need. That is
+  intended.
+- Sentences are split at ". " followed by a capital letter, so abbreviations like "Dr. Cruz"
+  can split a sentence.
+- The domain of a finding outside a domain section is guessed from keywords and can be wrong
+  or empty. Reviewers should check it.
+- A diagnosis is ONLY taken from an explicitly labelled line (Diagnosis, Diagnostic/Clinical
+  impression, Classification). The rules never infer one.
+- The English and Filipino cue lists are short. Other languages are not supported.
+
+Versions and approval
+- Extraction runs only on Finalized assessments, and only one draft can be open per
+  assessment.
+- If an assessment is reopened and its OCR text changes, every version is flagged
+  "source changed" (stale): drafts cannot be approved, and the page references may point at
+  the wrong text. The previously APPROVED findings stay available to goal matching, marked
+  "stale": true in GET /api/learners/{id}/findings. The Coordinator should run extraction again
+  and approve the new version.
+- Approved and superseded versions are never deleted. Removing the document or deleting the
+  assessment deletes its versions (ON DELETE CASCADE).
+- Only the SNED Coordinator can approve. Teachers can run extraction and edit drafts.
+- AUDIT LOGGING IS NOT DONE YET (Stage 14). Beyond created_by and approved_by on each
+  version, nothing records who edited which finding.
 
 
 -------------------------------------------------------------------------------

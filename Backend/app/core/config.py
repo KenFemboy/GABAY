@@ -70,6 +70,10 @@ class Settings(BaseSettings):
     )
     ocr_max_attempts: int = Field(default=2, ge=1, le=10, validation_alias="OCR_MAX_ATTEMPTS")
 
+    # Information extraction (Stage 6). Only rule-based extraction exists; this
+    # placeholder is for a later AI extractor that works on de-identified text.
+    extraction_ai_enabled: bool = Field(default=False, validation_alias="EXTRACTION_AI_ENABLED")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

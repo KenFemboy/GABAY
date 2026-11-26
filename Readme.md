@@ -189,6 +189,42 @@ docker run --env-file Backend/.env gabay-backend python -m app.workers.ocr_worke
 With local storage, both containers must share the storage directory (a volume). With Supabase,
 they don't need to.
 
+## Information extraction
+
+Once an assessment's OCR text has been reviewed and the assessment is **Finalized**, GABAY can
+pull structured findings out of it in five categories: **diagnosis, strengths, needs, present
+levels of performance and recommendations**. Each finding can carry a domain (reading,
+mathematics, behavior/social, communication, motor, …) and a source reference: the page, the
+character offsets and a quote of the text it came from.
+
+Workflow: **Analysis** on a finalized assessment → **Run extraction** (creates draft *v1*) →
+edit, add, delete or reorder findings → the **SNED Coordinator approves**. Running extraction
+again, or **Edit as new draft**, creates *v2*, and so on. Approving a new version supersedes the
+old one. Only one draft can be open per assessment.
+
+Extraction is **rule-based** (`Backend/app/services/extraction/rules.py`), with no AI and no
+network calls:
+- Headings such as `III. BEHAVIOR AND SOCIAL SKILLS`, `RECOMMENDATIONS` and `Diagnosis:` split
+  the text into sections.
+- List items or sentences under Diagnosis, Strengths, Needs and Recommendations become findings.
+- Each domain section becomes a present-level finding, and its sentences are sorted into
+  strengths and needs using cue words in English and Filipino.
+- A diagnosis is only taken from an explicitly labelled line.
+
+The schema is in `Backend/app/services/extraction/schema.py`. AI extraction on de-identified
+text is not built yet (`EXTRACTION_AI_ENABLED` is a placeholder).
+
+- `POST /api/assessments/{id}/extractions` – run extraction (Coordinator or assigned Teacher).
+- `GET /api/assessments/{id}/extractions`, `GET /api/extractions/{version_id}` – versions and findings.
+- `POST/PATCH/DELETE /api/extractions/{version_id}/findings[/{finding_id}]`,
+  `PUT /api/extractions/{version_id}/order` – edit a draft.
+- `POST /api/extractions/{version_id}/copy` – edit as new draft.
+- `POST /api/extractions/{version_id}/approve` – SNED Coordinator only.
+- `DELETE /api/extractions/{version_id}` – discard a draft.
+- `GET /api/learners/{id}/findings` – **approved findings only**, the input for goal matching.
+  Backend code must use `extraction_service.approved_findings_for_learner()` for this and never
+  read draft versions.
+
 ## Validation
 
 ```powershell
