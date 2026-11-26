@@ -8,6 +8,15 @@ from app.models.extraction import (
     ExtractionVersion,
     FindingOrigin,
 )
+from app.models.goal import (
+    Goal,
+    GoalDomain,
+    GoalEmbedding,
+    GoalSkill,
+    GoalStatus,
+    GoalUsage,
+    GoalVersion,
+)
 from app.models.ocr import OcrJob, OcrJobStatus, OcrPage, OcrPageSource, OcrPageStatus
 from app.models.learner import GradeLevel, Learner, LearnerAssignment, LearnerStatus, Sex
 from app.models.user import Role, User, UserStatus
@@ -21,6 +30,13 @@ __all__ = [
     "ExtractionStatus",
     "ExtractionVersion",
     "FindingOrigin",
+    "Goal",
+    "GoalDomain",
+    "GoalEmbedding",
+    "GoalSkill",
+    "GoalStatus",
+    "GoalUsage",
+    "GoalVersion",
     "GradeLevel",
     "ProcessingStatus",
     "Learner",

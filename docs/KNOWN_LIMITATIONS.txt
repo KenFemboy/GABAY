@@ -1,6 +1,6 @@
 GABAY - Known limitations and follow-ups
 =========================================
-Stages 3 to 6. Last updated 2026-11-26.
+Stages 3 to 7. Last updated 2026-11-26.
 
 This file is a to-do list for later. Each item says what the limit is and, where there is one,
 what to do about it. Update the file when an item is fixed or a new limit is found.
@@ -282,6 +282,53 @@ Versions and approval
 - Only the SNED Coordinator can approve. Teachers can run extraction and edit drafts.
 - AUDIT LOGGING IS NOT DONE YET (Stage 14). Beyond created_by and approved_by on each
   version, nothing records who edited which finding.
+
+
+-------------------------------------------------------------------------------
+STAGE 7 - GOAL BANK
+-------------------------------------------------------------------------------
+
+Not yet confirmed or checked (two checklist items are only half done)
+- "Domains and skills agreed with the SNED Coordinator": NOT DONE. The 9 domains and 30 skills
+  in app/data/goal_bank_seed.json are a proposal from the development team. The Coordinator
+  should review them in Goal bank -> Domains & skills (rename, add, deactivate).
+- "Starter set of reviewed, measurable goals": the 50 goals are written to be measurable
+  (condition + behavior + numeric criterion), but NOBODY HAS REVIEWED THEM YET. They load as
+  Draft. They become usable for matching only when the Coordinator activates them one by one.
+- The Goal bank screens have not been clicked through in a browser.
+- The Docker image has not been built with the embedding model.
+
+Embeddings
+- The model (sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2, about 240 MB) is
+  downloaded from Hugging Face the first time it is used, so the server needs internet once.
+  After that it works offline from EMBEDDING_CACHE_DIR (default Backend/.models, gitignored).
+  In Docker, mount a volume at /app/.models, or the model is downloaded again in every new
+  container.
+- The first Reindex, search or worker run after a restart loads the model, which takes a few
+  seconds and about 300-500 MB of RAM in each process that uses it (the API process for
+  Reindex and Find similar, and the worker process).
+- Quality: English findings match the right goals well in testing. Filipino text matches
+  noticeably more weakly (similarity around 0.35-0.40 against the English goals). Writing goal
+  statements in both languages, or a larger model, would help. Similarity is a suggestion
+  only; a person always chooses the goals (Stage 8).
+- Similarity is computed in Python over all active goal vectors. That is fine for a few
+  thousand goals. For much larger banks, move the vectors to pgvector.
+- Changing EMBEDDING_MODEL makes the next reindex replace every vector, and vectors from the
+  old model are deleted.
+- The worker only re-indexes automatically while it is running (about once a minute). Without
+  the worker, use the Reindex button or python -m app.scripts.reindex_goals.
+
+Versioning and status
+- A version counts as "used" only when later stages call goal_service.record_goal_usage().
+  Nothing calls it yet (the IEP stage will). Until then, every edit happens in place.
+- Archived goals cannot be edited. Activate one first, edit it, then archive it again if
+  needed.
+- Only unused Draft goals can be deleted. Domains and skills are never deleted, only
+  deactivated. A skill that goals use cannot be moved to another domain.
+- Domain codes cannot be changed, because extraction findings use the same codes.
+- There is no CSV import or export for goals yet.
+- AUDIT LOGGING IS NOT DONE YET (Stage 14). Each version records who created it, but nothing
+  records who activated or archived a goal.
 
 
 -------------------------------------------------------------------------------

@@ -1,0 +1,198 @@
+{
+  "_note": "DRAFT starter goal bank for GABAY. Proposed by the development team and NOT yet agreed with the SNED Coordinator. Loaded with status 'draft'; the Coordinator reviews, edits and activates goals in the Goal bank screen. Domain codes match the extraction FindingDomain values.",
+  "domains": [
+    {
+      "code": "reading", "name": "Reading", "sort_order": 1,
+      "description": "Early literacy and reading skills.",
+      "skills": [
+        {"code": "phonological_awareness", "name": "Phonological awareness"},
+        {"code": "letter_knowledge", "name": "Letter names and sounds"},
+        {"code": "decoding", "name": "Phonics and decoding"},
+        {"code": "fluency", "name": "Reading fluency"},
+        {"code": "vocabulary", "name": "Vocabulary"},
+        {"code": "comprehension", "name": "Reading comprehension"}
+      ]
+    },
+    {
+      "code": "writing", "name": "Writing", "sort_order": 2,
+      "description": "Handwriting, spelling and written expression.",
+      "skills": [
+        {"code": "handwriting", "name": "Handwriting and letter formation"},
+        {"code": "spelling", "name": "Spelling"},
+        {"code": "sentence_writing", "name": "Sentence writing"}
+      ]
+    },
+    {
+      "code": "mathematics", "name": "Mathematics", "sort_order": 3,
+      "description": "Numeracy and early mathematics.",
+      "skills": [
+        {"code": "number_sense", "name": "Number sense and counting"},
+        {"code": "addition_subtraction", "name": "Addition and subtraction"},
+        {"code": "word_problems", "name": "Word problems"},
+        {"code": "measurement_money_time", "name": "Measurement, money and time"}
+      ]
+    },
+    {
+      "code": "behavior_social", "name": "Behavior and social skills", "sort_order": 4,
+      "description": "Classroom behavior, self-regulation and social interaction.",
+      "skills": [
+        {"code": "on_task", "name": "On-task behavior"},
+        {"code": "following_directions", "name": "Following directions"},
+        {"code": "transitions", "name": "Transitions and routines"},
+        {"code": "social_interaction", "name": "Social interaction with peers"},
+        {"code": "self_regulation", "name": "Self-regulation"}
+      ]
+    },
+    {
+      "code": "communication", "name": "Communication", "sort_order": 5,
+      "description": "Receptive and expressive language.",
+      "skills": [
+        {"code": "expressive_language", "name": "Expressive language"},
+        {"code": "receptive_language", "name": "Receptive language"},
+        {"code": "conversation", "name": "Conversation skills"}
+      ]
+    },
+    {
+      "code": "motor", "name": "Motor skills", "sort_order": 6,
+      "description": "Fine and gross motor skills.",
+      "skills": [
+        {"code": "fine_motor", "name": "Fine motor"},
+        {"code": "gross_motor", "name": "Gross motor"}
+      ]
+    },
+    {
+      "code": "self_help", "name": "Self-help and daily living", "sort_order": 7,
+      "description": "Independence in personal care and daily routines.",
+      "skills": [
+        {"code": "dressing", "name": "Dressing"},
+        {"code": "hygiene", "name": "Hygiene and toileting"},
+        {"code": "feeding", "name": "Eating and feeding"}
+      ]
+    },
+    {
+      "code": "cognitive", "name": "Cognitive skills", "sort_order": 8,
+      "description": "Attention, memory and problem solving.",
+      "skills": [
+        {"code": "attention", "name": "Attention"},
+        {"code": "memory", "name": "Memory"},
+        {"code": "problem_solving", "name": "Problem solving"}
+      ]
+    },
+    {
+      "code": "other", "name": "Other", "sort_order": 9,
+      "description": "Goals that do not fit another domain.",
+      "skills": [
+        {"code": "general", "name": "General"}
+      ]
+    }
+  ],
+  "goals": [
+    {"code": "RD-001", "domain": "reading", "skill": "phonological_awareness", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "in 3 consecutive weekly probes",
+     "statement": "Given a spoken one-syllable word, the learner will say the first sound of the word with 80% accuracy in 3 consecutive weekly probes."},
+    {"code": "RD-002", "domain": "reading", "skill": "phonological_awareness", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "across 3 sessions",
+     "statement": "Given 10 spoken CVC words, the learner will blend the individual sounds into a word with 80% accuracy across 3 sessions."},
+    {"code": "RD-003", "domain": "reading", "skill": "letter_knowledge", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 90, "target_unit": "percent", "criterion": "in 2 consecutive probes",
+     "statement": "Given flash cards of all 26 letters, the learner will say the sound of each letter with 90% accuracy in 2 consecutive probes."},
+    {"code": "RD-004", "domain": "reading", "skill": "decoding", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "in 3 consecutive probes",
+     "statement": "Given a list of 20 CVC words, the learner will decode and read the words aloud independently with 80% accuracy in 3 consecutive probes."},
+    {"code": "RD-005", "domain": "reading", "skill": "decoding", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "in 3 consecutive probes",
+     "statement": "Given a list of 20 two-syllable words, the learner will decode and read the words aloud with 80% accuracy in 3 consecutive probes."},
+    {"code": "RD-006", "domain": "reading", "skill": "decoding", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 85, "target_unit": "percent", "criterion": "across 3 sessions",
+     "statement": "Given a decodable text at the learner's instructional level, the learner will read the text aloud with 85% word accuracy across 3 sessions."},
+    {"code": "RD-007", "domain": "reading", "skill": "fluency", "grade_band": "K-3", "measurement_method": "rate", "target_value": 40, "target_unit": "wpm", "criterion": "on 3 of 4 weekly probes",
+     "statement": "Given an unfamiliar Grade 1 reading passage, the learner will read aloud at 40 words correct per minute on 3 of 4 weekly probes."},
+    {"code": "RD-008", "domain": "reading", "skill": "fluency", "grade_band": "4-6", "measurement_method": "rate", "target_value": 70, "target_unit": "wpm", "criterion": "on 3 of 4 weekly probes",
+     "statement": "Given an unfamiliar Grade 3 reading passage, the learner will read aloud at 70 words correct per minute on 3 of 4 weekly probes."},
+    {"code": "RD-009", "domain": "reading", "skill": "vocabulary", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "in 3 consecutive sessions",
+     "statement": "Given 10 picture cards of common classroom and home words, the learner will name the pictured word in English or Filipino with 80% accuracy in 3 consecutive sessions."},
+    {"code": "RD-010", "domain": "reading", "skill": "comprehension", "grade_band": "K-3", "measurement_method": "trials", "target_value": 4, "target_unit": "trials", "criterion": "4 of 5 trials",
+     "statement": "After listening to or reading a short story, the learner will retell the main character, setting and one event in 4 of 5 trials."},
+    {"code": "RD-011", "domain": "reading", "skill": "comprehension", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "across 3 sessions",
+     "statement": "After reading a short passage at instructional level, the learner will answer literal who, what and where questions with 80% accuracy across 3 sessions."},
+    {"code": "RD-012", "domain": "reading", "skill": "comprehension", "grade_band": "4-6", "measurement_method": "percent_accuracy", "target_value": 70, "target_unit": "percent", "criterion": "across 4 sessions",
+     "statement": "After reading a short passage at instructional level, the learner will answer inferential why and how questions with 70% accuracy across 4 sessions."},
+
+    {"code": "WR-001", "domain": "writing", "skill": "handwriting", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "in 3 consecutive sessions",
+     "statement": "Given a model, the learner will copy 10 upper- and lowercase letters with correct formation and within the lines with 80% accuracy in 3 consecutive sessions."},
+    {"code": "WR-002", "domain": "writing", "skill": "handwriting", "grade_band": "K-3", "measurement_method": "trials", "target_value": 4, "target_unit": "trials", "criterion": "4 of 5 trials",
+     "statement": "The learner will write his or her first and last name legibly without a model in 4 of 5 trials."},
+    {"code": "WR-003", "domain": "writing", "skill": "spelling", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "on 3 consecutive weekly tests",
+     "statement": "Given 10 dictated CVC words, the learner will spell the words correctly with 80% accuracy on 3 consecutive weekly tests."},
+    {"code": "WR-004", "domain": "writing", "skill": "sentence_writing", "grade_band": "4-6", "measurement_method": "rubric", "target_value": 3, "target_unit": "level", "criterion": "on 3 of 4 writing samples",
+     "statement": "Given a picture prompt, the learner will write a complete sentence with a capital letter and end punctuation, scoring level 3 on the class writing rubric on 3 of 4 samples."},
+
+    {"code": "MA-001", "domain": "mathematics", "skill": "number_sense", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 90, "target_unit": "percent", "criterion": "in 3 consecutive sessions",
+     "statement": "Given a set of up to 20 objects, the learner will count the objects and say the total with 90% accuracy in 3 consecutive sessions."},
+    {"code": "MA-002", "domain": "mathematics", "skill": "number_sense", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 90, "target_unit": "percent", "criterion": "in 2 consecutive probes",
+     "statement": "The learner will read and write numbers from 1 to 100 with 90% accuracy in 2 consecutive probes."},
+    {"code": "MA-003", "domain": "mathematics", "skill": "addition_subtraction", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "across 3 sessions",
+     "statement": "Given counters or other manipulatives, the learner will solve 10 single-digit addition problems with 80% accuracy across 3 sessions."},
+    {"code": "MA-004", "domain": "mathematics", "skill": "addition_subtraction", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "across 3 sessions",
+     "statement": "Given counters or other manipulatives, the learner will solve 10 single-digit subtraction problems with 80% accuracy across 3 sessions."},
+    {"code": "MA-005", "domain": "mathematics", "skill": "addition_subtraction", "grade_band": "4-6", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "on 3 consecutive weekly probes",
+     "statement": "Given 10 two-digit addition and subtraction problems with regrouping, the learner will solve them with 80% accuracy on 3 consecutive weekly probes."},
+    {"code": "MA-006", "domain": "mathematics", "skill": "word_problems", "grade_band": "K-3", "measurement_method": "trials", "target_value": 4, "target_unit": "trials", "criterion": "4 of 5 trials",
+     "statement": "Given a one-step addition or subtraction word problem read aloud, the learner will choose the operation and solve it using drawings or objects in 4 of 5 trials."},
+    {"code": "MA-007", "domain": "mathematics", "skill": "measurement_money_time", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "across 3 sessions",
+     "statement": "Given Philippine coins and bills up to 100 pesos, the learner will identify each and count a given amount with 80% accuracy across 3 sessions."},
+    {"code": "MA-008", "domain": "mathematics", "skill": "measurement_money_time", "grade_band": "4-6", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "across 3 sessions",
+     "statement": "Given an analog clock, the learner will tell time to the hour and half hour with 80% accuracy across 3 sessions."},
+
+    {"code": "BS-001", "domain": "behavior_social", "skill": "on_task", "grade_band": "any", "measurement_method": "duration", "target_value": 10, "target_unit": "minutes", "criterion": "in 4 of 5 observed sessions",
+     "statement": "During independent seatwork, the learner will remain on task for 10 consecutive minutes with no more than one teacher prompt in 4 of 5 observed sessions."},
+    {"code": "BS-002", "domain": "behavior_social", "skill": "on_task", "grade_band": "any", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "of observed intervals over 2 weeks",
+     "statement": "Using a visual timer and scheduled short breaks, the learner will be on task during 80% of observed intervals in seatwork over 2 weeks."},
+    {"code": "BS-003", "domain": "behavior_social", "skill": "following_directions", "grade_band": "K-3", "measurement_method": "trials", "target_value": 4, "target_unit": "trials", "criterion": "4 of 5 opportunities",
+     "statement": "Given a two-step classroom direction, the learner will complete both steps within 1 minute without additional prompts in 4 of 5 opportunities."},
+    {"code": "BS-004", "domain": "behavior_social", "skill": "following_directions", "grade_band": "4-6", "measurement_method": "trials", "target_value": 4, "target_unit": "trials", "criterion": "4 of 5 opportunities",
+     "statement": "Given a three-step classroom direction, the learner will complete all steps in order without additional prompts in 4 of 5 opportunities."},
+    {"code": "BS-005", "domain": "behavior_social", "skill": "transitions", "grade_band": "any", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "of transitions over 2 weeks",
+     "statement": "Using a visual schedule and a one-minute warning, the learner will move to the next activity within 2 minutes without upset in 80% of transitions over 2 weeks."},
+    {"code": "BS-006", "domain": "behavior_social", "skill": "transitions", "grade_band": "any", "measurement_method": "trials", "target_value": 4, "target_unit": "trials", "criterion": "4 of 5 unexpected changes",
+     "statement": "When told about an unexpected change in the daily routine, the learner will use a taught calming strategy and accept the change in 4 of 5 occasions."},
+    {"code": "BS-007", "domain": "behavior_social", "skill": "social_interaction", "grade_band": "any", "measurement_method": "frequency", "target_value": 3, "target_unit": "count", "criterion": "per recess period on 4 of 5 days",
+     "statement": "During recess or group work, the learner will start a positive interaction with a peer (greeting, asking to play, sharing) at least 3 times per period on 4 of 5 days."},
+    {"code": "BS-008", "domain": "behavior_social", "skill": "social_interaction", "grade_band": "any", "measurement_method": "trials", "target_value": 4, "target_unit": "trials", "criterion": "4 of 5 opportunities",
+     "statement": "During a structured game with peers, the learner will wait for his or her turn and take turns appropriately in 4 of 5 opportunities."},
+    {"code": "BS-009", "domain": "behavior_social", "skill": "self_regulation", "grade_band": "any", "measurement_method": "trials", "target_value": 4, "target_unit": "trials", "criterion": "4 of 5 observed occasions",
+     "statement": "When upset or frustrated, the learner will ask for a break or use a taught calming strategy instead of leaving the area or crying in 4 of 5 observed occasions."},
+    {"code": "BS-010", "domain": "behavior_social", "skill": "self_regulation", "grade_band": "any", "measurement_method": "frequency", "target_value": 2, "target_unit": "count", "criterion": "or fewer per day for 3 consecutive weeks",
+     "statement": "The learner will reduce calling out without raising a hand to 2 or fewer times per day for 3 consecutive weeks."},
+
+    {"code": "CM-001", "domain": "communication", "skill": "expressive_language", "grade_band": "K-3", "measurement_method": "trials", "target_value": 4, "target_unit": "trials", "criterion": "4 of 5 opportunities",
+     "statement": "Given a picture or classroom event, the learner will describe it using a complete sentence of at least 5 words in 4 of 5 opportunities."},
+    {"code": "CM-002", "domain": "communication", "skill": "expressive_language", "grade_band": "any", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "of opportunities across 3 sessions",
+     "statement": "When needing help or an item, the learner will make a request using a full phrase (e.g. 'Please help me') in 80% of opportunities across 3 sessions."},
+    {"code": "CM-003", "domain": "communication", "skill": "receptive_language", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "across 3 sessions",
+     "statement": "Given simple who, what and where questions in English or Filipino, the learner will answer with a relevant response with 80% accuracy across 3 sessions."},
+    {"code": "CM-004", "domain": "communication", "skill": "receptive_language", "grade_band": "any", "measurement_method": "trials", "target_value": 4, "target_unit": "trials", "criterion": "4 of 5 trials",
+     "statement": "When asked a question, the learner will answer it directly without first repeating (echoing) the question in 4 of 5 trials."},
+    {"code": "CM-005", "domain": "communication", "skill": "conversation", "grade_band": "any", "measurement_method": "trials", "target_value": 3, "target_unit": "trials", "criterion": "3 of 4 structured conversations",
+     "statement": "In a structured conversation with a peer, the learner will keep the conversation going for at least 3 turns on the same topic in 3 of 4 opportunities."},
+
+    {"code": "MO-001", "domain": "motor", "skill": "fine_motor", "grade_band": "K-3", "measurement_method": "trials", "target_value": 4, "target_unit": "trials", "criterion": "4 of 5 observed writing tasks",
+     "statement": "During writing tasks, the learner will hold a pencil with a functional tripod grasp, with no more than one reminder, in 4 of 5 observed tasks."},
+    {"code": "MO-002", "domain": "motor", "skill": "fine_motor", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "across 3 sessions",
+     "statement": "Given a printed shape or line, the learner will cut along it with scissors staying within a quarter inch of the line for 80% of its length across 3 sessions."},
+    {"code": "MO-003", "domain": "motor", "skill": "fine_motor", "grade_band": "K-3", "measurement_method": "trials", "target_value": 4, "target_unit": "trials", "criterion": "4 of 5 trials",
+     "statement": "Given a model, the learner will trace and then copy basic shapes (circle, square, triangle) recognisably in 4 of 5 trials."},
+    {"code": "MO-004", "domain": "motor", "skill": "gross_motor", "grade_band": "K-3", "measurement_method": "trials", "target_value": 4, "target_unit": "trials", "criterion": "4 of 5 trials",
+     "statement": "The learner will catch a playground ball thrown from 2 meters with both hands in 4 of 5 trials."},
+
+    {"code": "SH-001", "domain": "self_help", "skill": "dressing", "grade_band": "K-3", "measurement_method": "checklist", "target_value": 100, "target_unit": "percent", "criterion": "of checklist steps on 4 of 5 days",
+     "statement": "The learner will put on and button a uniform shirt independently, completing 100% of the checklist steps on 4 of 5 days."},
+    {"code": "SH-002", "domain": "self_help", "skill": "hygiene", "grade_band": "any", "measurement_method": "checklist", "target_value": 90, "target_unit": "percent", "criterion": "of steps on 4 of 5 days",
+     "statement": "Using a picture sequence, the learner will wash and dry hands after toileting and before eating, completing 90% of the steps independently on 4 of 5 days."},
+    {"code": "SH-003", "domain": "self_help", "skill": "feeding", "grade_band": "K-3", "measurement_method": "trials", "target_value": 4, "target_unit": "trials", "criterion": "4 of 5 snack times",
+     "statement": "During snack time, the learner will open his or her own food containers and eat using a spoon or fork independently on 4 of 5 days."},
+
+    {"code": "CG-001", "domain": "cognitive", "skill": "attention", "grade_band": "any", "measurement_method": "duration", "target_value": 5, "target_unit": "minutes", "criterion": "in 4 of 5 sessions",
+     "statement": "During a teacher-led group lesson, the learner will look at the speaker or materials and respond when called on for 5 consecutive minutes in 4 of 5 sessions."},
+    {"code": "CG-002", "domain": "cognitive", "skill": "memory", "grade_band": "K-3", "measurement_method": "trials", "target_value": 4, "target_unit": "trials", "criterion": "4 of 5 trials",
+     "statement": "Given a sequence of 4 pictures shown for 10 seconds, the learner will recall and arrange them in the correct order in 4 of 5 trials."},
+    {"code": "CG-003", "domain": "cognitive", "skill": "problem_solving", "grade_band": "any", "measurement_method": "trials", "target_value": 3, "target_unit": "trials", "criterion": "3 of 4 opportunities",
+     "statement": "When faced with a simple everyday problem (e.g. a missing material), the learner will name one possible solution and try it before asking for help in 3 of 4 opportunities."},
+    {"code": "CG-004", "domain": "cognitive", "skill": "problem_solving", "grade_band": "K-3", "measurement_method": "percent_accuracy", "target_value": 80, "target_unit": "percent", "criterion": "across 3 sessions",
+     "statement": "Given a set of 10 objects or pictures, the learner will sort them by one attribute (colour, shape or category) with 80% accuracy across 3 sessions."}
+  ]
+}

@@ -74,6 +74,13 @@ class Settings(BaseSettings):
     # placeholder is for a later AI extractor that works on de-identified text.
     extraction_ai_enabled: bool = Field(default=False, validation_alias="EXTRACTION_AI_ENABLED")
 
+    # Goal bank embeddings (Stage 7): local fastembed model, no external API.
+    embedding_model: str = Field(
+        default="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+        validation_alias="EMBEDDING_MODEL",
+    )
+    embedding_cache_dir: str = Field(default=".models", validation_alias="EMBEDDING_CACHE_DIR")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

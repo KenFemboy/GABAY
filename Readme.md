@@ -225,6 +225,57 @@ text is not built yet (`EXTRACTION_AI_ENABLED` is a placeholder).
   Backend code must use `extraction_service.approved_findings_for_learner()` for this and never
   read draft versions.
 
+## Goal bank
+
+The **Goal bank** (sidebar) holds measurable goals organised by **domain and skill**. The domain
+codes are the same as the extraction finding domains.
+
+**What a goal holds:**
+- the goal statement (condition + behavior + criterion);
+- a **measurement method** (percent accuracy, trials, frequency, duration, rate, rubric, checklist);
+- a numeric **target** and unit, an optional criterion, and a grade band;
+- a **status**: Draft → Active → Archived;
+- a **version** number.
+
+**Who can do what:** only the SNED Coordinator creates, edits, activates and archives goals, and
+manages the domains and skills (**Domains & skills** tab). Teachers and the School Head can browse
+active goals.
+
+**Versioning:** editing a goal whose current version is *used* creates a new version, and the old
+version is kept unchanged. A version counts as used once another record references it (for
+example an IEP, through `goal_service.record_goal_usage()`). A goal that isn't used yet is edited
+in place.
+
+**Starter set:** a draft set of 9 domains, 30 skills and 50 measurable goals, waiting for the
+Coordinator's review. Load it with:
+
+```powershell
+cd Backend
+python -m app.scripts.seed_goal_bank     # safe to re-run; never overwrites existing goals
+```
+
+Everything is loaded as **Draft**. The Coordinator reviews each goal and activates it.
+
+**Embeddings:** every active goal gets a vector from a local model
+(`sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` via fastembed, which runs on the
+server with no API key).
+- The model downloads once, about 240 MB, into `Backend/.models/`.
+- Vectors are stored in PostgreSQL, one per goal version and model. Reindexing skips goals that
+  haven't changed, refreshes edited ones, and removes vectors of archived goals and old versions,
+  so running it again never creates duplicates.
+- Indexing runs from the **Reindex** button or `python -m app.scripts.reindex_goals`. If the OCR
+  worker is running, it also re-indexes automatically about once a minute when something changed.
+- **Find similar** on the Goal bank page ranks active goals by similarity to any text, such as a
+  finding.
+
+Endpoints:
+- `GET /api/goal-taxonomy`
+- `POST/PATCH /api/goal-taxonomy/domains|skills`
+- `GET/POST /api/goals`, `GET/PATCH/DELETE /api/goals/{id}`
+- `POST /api/goals/{id}/activate|archive`
+- `GET /api/goals/index-status`, `POST /api/goals/reindex`
+- `GET /api/goals/search?q=`
+
 ## Validation
 
 ```powershell

@@ -7,6 +7,8 @@ import LoginPage from '../features/auth/LoginPage'
 import AnalysisPage from '../features/assessments/AnalysisPage'
 import OcrReviewPage from '../features/assessments/OcrReviewPage'
 import DashboardPage from '../features/dashboard/DashboardPage'
+import { GOAL_READER_ROLES } from '../features/goals/constants'
+import GoalBankPage from '../features/goals/GoalBankPage'
 import { LEARNER_READER_ROLES } from '../features/learners/constants'
 import LearnerProfilePage from '../features/learners/LearnerProfilePage'
 import LearnersPage from '../features/learners/LearnersPage'
@@ -32,6 +34,10 @@ export default function Routes() {
             <Route element={<LearnerProfilePage />} path="/learners/:learnerId" />
             <Route element={<OcrReviewPage />} path="/learners/:learnerId/assessments/:assessmentId/review" />
             <Route element={<AnalysisPage />} path="/learners/:learnerId/assessments/:assessmentId/analysis" />
+          </Route>
+
+          <Route element={<ProtectedRoute roles={GOAL_READER_ROLES} />}>
+            <Route element={<GoalBankPage />} path="/goals" />
           </Route>
 
           <Route element={<ProtectedRoute roles={[ROLES.SYSTEM_ADMIN]} />}>

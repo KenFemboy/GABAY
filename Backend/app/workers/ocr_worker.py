@@ -77,6 +77,24 @@ def recover(session_factory: Callable[[], Session], settings: Settings) -> None:
         ocr_job_service.recover_stale(db, settings)
     finally:
         db.close()
+    reindex_goals_if_needed(session_factory)
+
+
+def reindex_goals_if_needed(session_factory: Callable[[], Session], embedder=None) -> None:
+    """Keep goal embeddings current (Stage 7). Failures are logged, never fatal."""
+    from app.services import embedding_service
+
+    db = session_factory()
+    try:
+        embedding_service.reindex_if_needed(db, embedder or embedding_service.get_embedder())
+    except embedding_service.EmbeddingUnavailable as exc:
+        db.rollback()
+        logger.warning("Goal embeddings not updated: %s", exc)
+    except Exception:
+        db.rollback()
+        logger.exception("Goal reindex failed")
+    finally:
+        db.close()
 
 
 def main(argv: list[str] | None = None) -> None:

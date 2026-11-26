@@ -20,7 +20,7 @@ RUN pip install -r requirements.txt
 COPY alembic.ini .
 COPY app ./app
 
-RUN useradd --create-home --uid 10001 gabay && mkdir -p /app/storage && chown gabay /app/storage
+RUN useradd --create-home --uid 10001 gabay && mkdir -p /app/storage /app/.models && chown gabay /app/storage /app/.models
 USER gabay
 
 EXPOSE 8000

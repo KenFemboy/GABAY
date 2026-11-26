@@ -13,3 +13,5 @@ PyJWT==2.10.1
 pillow==13.0.0
 pypdfium2==5.15.2
 pytesseract==0.3.13
+fastembed==0.9.1
+numpy==2.5.5

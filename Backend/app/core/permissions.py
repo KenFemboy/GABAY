@@ -75,3 +75,5 @@ require_document_deleters = require_roles(Role.SNED_COORDINATOR)
 require_status_managers = require_roles(Role.SNED_COORDINATOR)
 # Approving extracted findings (Stage 6). Running and editing uses require_assessment_writers.
 require_extraction_approvers = require_roles(Role.SNED_COORDINATOR)
+# Goal bank (Stage 7): only the Coordinator manages goals and the taxonomy.
+require_goal_managers = require_roles(Role.SNED_COORDINATOR)
