@@ -8,6 +8,7 @@ import { primaryButtonClass, secondaryButtonClass } from '../../shared/forms/sty
 import { getErrorMessage } from '../../shared/utils/apiError'
 import AssessmentsTab from '../assessments/AssessmentsTab'
 import IepTab from '../iep/IepTab'
+import IlawTab from '../ilaw/IlawTab'
 import AssignmentsPanel from './AssignmentsPanel'
 import { GRADE_LABELS, LEARNER_EDITOR_ROLES, PROFILE_TABS, SEX_LABELS } from './constants'
 import LearnerForm from './LearnerForm'
@@ -184,6 +185,8 @@ function LearnerProfile({ learnerId }) {
             <AssessmentsTab learner={learner} onChanged={reloadSummary} />
           ) : activeTab === 'iep' ? (
             <IepTab learner={learner} onChanged={reloadSummary} />
+          ) : activeTab === 'ilaw' ? (
+            <IlawTab learner={learner} onChanged={reloadSummary} />
           ) : (
             <ModuleTab
               label={PROFILE_TABS.find((t) => t.key === activeTab).label}

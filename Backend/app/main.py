@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.core.config import get_settings
 from app.core.errors import APIError
 from app.db.session import engine
-from app.routers import assessments, auth, extractions, files, goals, iep, learners, matching, users
+from app.routers import assessments, auth, extractions, files, goals, iep, ilaw, learners, matching, users
 from app.services.ocr_service import tesseract_status
 
 settings = get_settings()
@@ -71,6 +71,7 @@ app.include_router(extractions.router)
 app.include_router(goals.router)
 app.include_router(matching.router)
 app.include_router(iep.router)
+app.include_router(ilaw.router)
 
 
 @app.get("/api/health")

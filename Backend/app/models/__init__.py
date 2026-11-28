@@ -18,6 +18,7 @@ from app.models.goal import (
     GoalVersion,
 )
 from app.models.iep import Iep, IepFinding, IepGoal, IepGoalSource, IepStatus
+from app.models.ilaw import AlignmentSource, AlignmentStatus, IlawAlignment, IlawEntry
 from app.models.matching import (
     GoalRecommendation,
     MatchingRun,
@@ -30,6 +31,8 @@ from app.models.learner import GradeLevel, Learner, LearnerAssignment, LearnerSt
 from app.models.user import Role, User, UserStatus
 
 __all__ = [
+    "AlignmentSource",
+    "AlignmentStatus",
     "Assessment",
     "AssessmentType",
     "Document",
@@ -56,6 +59,8 @@ __all__ = [
     "IepGoal",
     "IepGoalSource",
     "IepStatus",
+    "IlawAlignment",
+    "IlawEntry",
     "ProcessingStatus",
     "Learner",
     "LearnerAssignment",

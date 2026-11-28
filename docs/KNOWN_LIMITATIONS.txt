@@ -1,6 +1,6 @@
 GABAY - Known limitations and follow-ups
 =========================================
-Stages 3 to 9. Last updated 2026-11-26.
+Stages 3 to 10. Last updated 2026-11-28.
 
 This file is a to-do list for later. Each item says what the limit is and, where there is one,
 what to do about it. Update the file when an item is fixed or a new limit is found.
@@ -431,9 +431,53 @@ Validation limits
   review two weeks before the end, quarterly review dates).
 - Team members are free text (name and role), not linked user accounts. "Responsible staff" on
   goals is also free text.
-- Progress monitoring against the review dates is a later stage (Stage 10).
+- Progress monitoring against the review dates is a later stage.
 - AUDIT LOGGING IS NOT DONE YET (Stage 14). Each version records who created and who finalized
   it. Edits to drafts are not logged.
+
+
+-------------------------------------------------------------------------------
+STAGE 10 - ILAW ALIGNMENT
+-------------------------------------------------------------------------------
+
+Not yet confirmed or checked
+- "ILAW" was not defined anywhere in the project. It was built as a DAILY LEARNING ACTIVITY LOG
+  (decided with the developer on 2026-11-28). If the school means something else by ILAW, the
+  entry fields need to change.
+- Migration 0010 has NOT been run on the development database yet ("alembic upgrade head").
+- The ILAW tab has not been clicked through in a browser.
+
+Alignment
+- Suggestions are similarity only, and a teacher always decides. Nothing is linked as
+  "confirmed" without a person.
+- Only the ACTIVE IEP is used: the finalized version for the learner's CURRENT school year.
+  Without one, no entries can be logged (not even for past dates).
+- In a quick real-model check, English activities ranked the right goal first (0.42 to 0.58
+  similarity against at most 0.32 for the wrong goals). A Filipino activity also ranked the
+  right goal first but scored 0.28, which is below ILAW_MIN_SCORE (0.35), so it got NO
+  suggestion. Teachers writing in Filipino will often need to link goals by hand, or
+  ILAW_MIN_SCORE can be lowered (for example to 0.25).
+- Suggestions use only the title and description, not the learner's response or the notes.
+- When an IEP amendment is finalized, existing entries keep pointing at the old version until
+  someone re-suggests them (or adds or changes a link). Their confirmed links to old-version
+  goals stay as history.
+- If the text changes, editing an entry re-runs the suggestions. Confirmed and rejected links
+  are kept even if they no longer fit the new text.
+
+Duplicates
+- The duplicate rule compares the TITLE only (after lower-casing and collapsing spaces), for
+  the same learner and date. "Subtraction with counters" and "Subtraction using counters" count
+  as different activities.
+
+Other
+- No photos or file attachments on entries.
+- The activity date must be within the IEP period and not in the future.
+- Entries can be edited and deleted by any writer (Coordinator or assigned Teacher), not only by
+  the teacher who created them.
+- Progress scoring per goal (using the confirmed links and the learner's response) is not built
+  yet. ilaw_alignment_service.entries_for_goal() is ready for it.
+- AUDIT LOGGING IS NOT DONE YET (Stage 14). Each link records who decided and when. Entry edits
+  and deletions are not logged.
 
 
 -------------------------------------------------------------------------------

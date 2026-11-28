@@ -390,6 +390,42 @@ Endpoints:
 - `GET /api/ieps/{id}/validation`, `POST /api/ieps/{id}/finalize`, `POST /api/ieps/{id}/amend`
 - `GET /api/ieps/{id}/document` (DOCX)
 
+## ILAW (daily learning activity log)
+
+The **ILAW** tab on the learner profile is a log of activities done with the learner. Each
+entry has a date, an activity title, a description, and optionally materials, the learner's
+response, duration and notes.
+
+**Rules:**
+- An entry can only be logged when the learner has an **active IEP**: the *finalized* IEP for
+  their current school year. Drafts and superseded versions are never used.
+- The date can't be in the future and must fall inside the IEP period.
+- **No duplicates:** the same learner, date and activity title is refused (409), even if the
+  title's upper/lower case or spacing differs. The database enforces the same rule.
+
+**Alignment with IEP goals:**
+- When an entry is saved, GABAY suggests which goals of the active IEP the activity worked on.
+  It uses the same local embedding model as goal matching, and keeps the top `ILAW_TOP_K`
+  (default 3) goals with similarity ≥ `ILAW_MIN_SCORE` (default 0.35).
+- Each suggestion is saved with its **score, rank and model version**
+  (`<model>|ilaw-text-v1`).
+- The teacher **confirms**, **rejects** or **changes** each link, or links another goal by hand.
+  Each decision records who made it and when.
+- **Re-suggest** keeps every decision and never creates duplicate links.
+- After an IEP amendment is finalized, re-suggesting moves the entry to the new version.
+  Decided links on the old version are kept as history.
+- If the model is unavailable, the entry is still saved and goals can be linked by hand.
+
+**Who can do what:** the SNED Coordinator and assigned Teachers log entries and decide links;
+the School Head can only view.
+
+Endpoints:
+- `GET /api/learners/{id}/ilaw/active-iep`
+- `GET/POST /api/learners/{id}/ilaw`
+- `GET/PATCH/DELETE /api/ilaw/{id}`, `POST /api/ilaw/{id}/suggest`
+- `POST /api/ilaw/{id}/links`
+- `POST /api/ilaw-links/{id}/confirm|reject|reset|change`
+
 ## Validation
 
 ```powershell
