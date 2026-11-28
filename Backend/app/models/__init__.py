@@ -26,6 +26,7 @@ from app.models.matching import (
     RecommendationSource,
     RecommendationStatus,
 )
+from app.models.progress import EvidenceType, GradingPeriod, ProgressRecord, ProgressUnit
 from app.models.ocr import OcrJob, OcrJobStatus, OcrPage, OcrPageSource, OcrPageStatus
 from app.models.learner import GradeLevel, Learner, LearnerAssignment, LearnerStatus, Sex
 from app.models.user import Role, User, UserStatus
@@ -61,7 +62,11 @@ __all__ = [
     "IepStatus",
     "IlawAlignment",
     "IlawEntry",
+    "EvidenceType",
+    "GradingPeriod",
     "ProcessingStatus",
+    "ProgressRecord",
+    "ProgressUnit",
     "Learner",
     "LearnerAssignment",
     "LearnerStatus",

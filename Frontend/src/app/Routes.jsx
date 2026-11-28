@@ -14,6 +14,8 @@ import GoalBankPage from '../features/goals/GoalBankPage'
 import { LEARNER_READER_ROLES } from '../features/learners/constants'
 import LearnerProfilePage from '../features/learners/LearnerProfilePage'
 import LearnersPage from '../features/learners/LearnersPage'
+import AttentionPage from '../features/progress/AttentionPage'
+import { ATTENTION_VIEWER_ROLES } from '../features/progress/constants'
 import UsersPage from '../features/users/UsersPage'
 import AuthLayout from '../layouts/AuthLayout'
 import DashboardLayout from '../layouts/DashboardLayout'
@@ -38,6 +40,10 @@ export default function Routes() {
             <Route element={<AnalysisPage />} path="/learners/:learnerId/assessments/:assessmentId/analysis" />
             <Route element={<GoalRecommendationsPage />} path="/learners/:learnerId/goals" />
             <Route element={<IepBuilderPage />} path="/learners/:learnerId/ieps/:iepId" />
+          </Route>
+
+          <Route element={<ProtectedRoute roles={ATTENTION_VIEWER_ROLES} />}>
+            <Route element={<AttentionPage />} path="/progress/attention" />
           </Route>
 
           <Route element={<ProtectedRoute roles={GOAL_READER_ROLES} />}>

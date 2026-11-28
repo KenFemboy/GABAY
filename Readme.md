@@ -426,6 +426,60 @@ Endpoints:
 - `POST /api/ilaw/{id}/links`
 - `POST /api/ilaw-links/{id}/confirm|reject|reset|change`
 
+## Progress monitoring
+
+The **Progress** tab on the learner profile shows one card per goal of the active (finalized)
+IEP. Each card has a chart, a status, and **Add data point**.
+
+**Evidence types:**
+
+| Type | Needs |
+|---|---|
+| Data probe, work sample, test | a goal and a measured value |
+| Observation | a note; a goal and value are optional |
+| Grade | subject, grading period (Q1–Q4 or final) and a grade from 0 to 100; a goal is optional |
+
+**Value rules, taken from the goal's measurement method.** The unit always comes from the goal.
+
+| Method | Allowed value |
+|---|---|
+| Percent accuracy, checklist | 0–100 %, or *correct / total*, saved as a percent |
+| Trials | successes plus *out of*, with successes ≤ out of |
+| Frequency | a whole number |
+| Duration | minutes > 0 (at most 480) |
+| Rate | per minute > 0 |
+| Rubric | a whole number from 0 to 10 |
+
+The date must be inside the IEP period and not in the future. Invalid entries return 422 with
+the problem fields.
+
+**Chart:** data points, a dashed **aim line** from the baseline (at the goal's start date) to
+the target (at the target date), the target line, and faint review-date marks. Hover shows a
+tooltip, and a table view is available. Grades aren't plotted on goal charts; they are listed
+under the card and in the timeline.
+
+**Status:**
+- **Below aim line** when the median of the last 3 points is behind the aim line. A goal whose
+  target is lower than its baseline (fewer call-outs, for example) counts as behind when it is
+  *above* the line.
+- **Target met** when the latest point reaches the target.
+- **No recent data** when nothing has been recorded for more than 30 days, and **No data yet**
+  when nothing has been recorded more than 30 days after the goal started.
+- **No numeric baseline** when the IEP goal has no baseline value.
+
+**Timeline:** ILAW activities, data points, observations and grades in one list, filterable by
+type and date.
+
+**Progress alerts** (sidebar and dashboard; Coordinator and School Head) lists goals of
+finalized IEPs that are below the aim line or missing data. Teachers who call the endpoint see
+only their assigned learners.
+
+Endpoints:
+- `GET /api/learners/{id}/progress/goals`, `GET /api/iep-goals/{id}/progress`
+- `GET/POST /api/learners/{id}/progress`, `PATCH/DELETE /api/progress/{id}`
+- `GET /api/learners/{id}/timeline?types=&from=&to=`
+- `GET /api/progress/attention?status=`
+
 ## Validation
 
 ```powershell

@@ -1,6 +1,6 @@
 GABAY - Known limitations and follow-ups
 =========================================
-Stages 3 to 10. Last updated 2026-11-28.
+Stages 3 to 11. Last updated 2026-11-28.
 
 This file is a to-do list for later. Each item says what the limit is and, where there is one,
 what to do about it. Update the file when an item is fixed or a new limit is found.
@@ -478,6 +478,51 @@ Other
   yet. ilaw_alignment_service.entries_for_goal() is ready for it.
 - AUDIT LOGGING IS NOT DONE YET (Stage 14). Each link records who decided and when. Entry edits
   and deletions are not logged.
+
+
+-------------------------------------------------------------------------------
+STAGE 11 - PROGRESS MONITORING
+-------------------------------------------------------------------------------
+
+Not yet confirmed or checked
+- Migration 0011 has NOT been run on the development database yet ("alembic upgrade head").
+- The chart (shared/charts/ProgressChart.jsx), the Progress tab, the timeline and Progress
+  alerts have NOT been looked at in a browser. The chart's series colour passed the dataviz
+  palette validator in light and dark mode, but layout details (label overlap near the right
+  edge, tooltip position on small screens) still need a visual check. The app has no dark
+  mode, so only the light colours are used.
+
+Status rules (fixed; change progress_analysis.py if the school wants different ones)
+- The aim line is a STRAIGHT line from the baseline (at the goal's start date) to the target
+  (at the target date).
+- A goal is "below aim line" when the MEDIAN OF THE LAST 3 POINTS is behind the line on the
+  date of the latest point. One bad point alone does not flag a goal.
+- "No recent data" = nothing recorded for more than 30 days. "No data yet" = no points at all,
+  more than 30 days after the goal's start. Both windows are fixed at 30 days.
+- The direction is INFERRED: if the target is lower than the baseline, it is treated as a
+  "decrease" goal (lower is better). There is no separate setting.
+- Goals without a numeric baseline value in the IEP get "No numeric baseline" and no aim line.
+  The Stage 9 builder fills the baseline TEXT automatically, but staff must type the baseline
+  VALUE.
+- "Target met" looks at the latest point only (it does not require several points at
+  target).
+- Status is calculated on request, not stored, so the alert list reflects the data at the
+  moment it is opened.
+
+Data entry
+- The value's unit always comes from the IEP goal. Percent goals also accept correct/total,
+  which is saved as a percentage (the raw counts are not kept).
+- Trials store successes and "out of". The chart plots successes (the goal targets are written
+  that way, e.g. 4 of 5 trials).
+- Grades (0-100) are never plotted on goal charts, because they use a different scale. They
+  appear under the goal card and in the timeline.
+- Dates must be inside the period of the IEP that was active when the record was made, and
+  cannot be in the future.
+- Records stay linked to the IEP version they were made under. After an amendment, the charts
+  of the new version start without the old data points (the goals are new copies).
+- There is no CSV export of progress data yet.
+- AUDIT LOGGING IS NOT DONE YET (Stage 14). Records keep who created them, but edits and
+  deletions are not logged.
 
 
 -------------------------------------------------------------------------------
