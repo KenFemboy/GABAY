@@ -10,6 +10,7 @@ import DashboardPage from '../features/dashboard/DashboardPage'
 import { GOAL_READER_ROLES } from '../features/goals/constants'
 import GoalRecommendationsPage from '../features/matching/GoalRecommendationsPage'
 import IepBuilderPage from '../features/iep/IepBuilderPage'
+import EvaluationEditorPage from '../features/evaluations/EvaluationEditor'
 import GoalBankPage from '../features/goals/GoalBankPage'
 import { LEARNER_READER_ROLES } from '../features/learners/constants'
 import LearnerProfilePage from '../features/learners/LearnerProfilePage'
@@ -40,6 +41,7 @@ export default function Routes() {
             <Route element={<AnalysisPage />} path="/learners/:learnerId/assessments/:assessmentId/analysis" />
             <Route element={<GoalRecommendationsPage />} path="/learners/:learnerId/goals" />
             <Route element={<IepBuilderPage />} path="/learners/:learnerId/ieps/:iepId" />
+            <Route element={<EvaluationEditorPage />} path="/learners/:learnerId/evaluations/:evaluationId" />
           </Route>
 
           <Route element={<ProtectedRoute roles={ATTENTION_VIEWER_ROLES} />}>

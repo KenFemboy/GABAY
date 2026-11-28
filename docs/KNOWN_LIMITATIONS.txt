@@ -1,6 +1,6 @@
 GABAY - Known limitations and follow-ups
 =========================================
-Stages 3 to 11. Last updated 2026-11-28.
+Stages 3 to 12. Last updated 2026-11-28.
 
 This file is a to-do list for later. Each item says what the limit is and, where there is one,
 what to do about it. Update the file when an item is fixed or a new limit is found.
@@ -523,6 +523,63 @@ Data entry
 - There is no CSV export of progress data yet.
 - AUDIT LOGGING IS NOT DONE YET (Stage 14). Records keep who created them, but edits and
   deletions are not logged.
+
+
+-------------------------------------------------------------------------------
+STAGE 12 - YEAR-END EVALUATION
+-------------------------------------------------------------------------------
+
+Not yet confirmed or checked
+- A REAL OPENAI CALL HAS NOT BEEN MADE. No API key was available during development. The
+  tests use a fake model, plus faked SDK errors to check that the real client handles them.
+  The request format (client.responses.parse with a Pydantic schema, store=False) was taken
+  from the installed openai 3.60.0 package, not guessed, but OpenAI may still reject parts of
+  it for some models (for example models without structured-output support). Do one test run
+  with a real key and model (README) before relying on it.
+- Migration 0012 has NOT been run on the development database yet ("alembic upgrade head").
+- The Evaluations tab, the preview dialog and the editor have not been clicked through in a
+  browser.
+
+Privacy (read before turning AI drafting on)
+- AI drafting is OFF by default. It needs EVALUATION_AI_ENABLED=true plus OPENAI_API_KEY and
+  OPENAI_MODEL, and a staff member must preview the package and click "Generate draft".
+- De-identification is RULE-BASED. It replaces the learner's names, every GABAY user's name,
+  IEP team member names, names in "responsible staff", the school name, the learner code, the
+  birth date, emails, phone numbers and calendar dates, and does a final scan that blocks
+  sending if a known identifier is still there. It CANNOT recognise names it does not know
+  (a parent's or sibling's name typed into a note, a nickname, a neighbouring school). That is
+  why the preview exists: staff must read it before sending.
+- Single name words are only replaced when written with a capital letter (so a learner called
+  "Will" does not remove the word "will"). A name typed all in lower case in a note is NOT
+  caught.
+- The grade level and age (in years) are sent. Sex, section and exact dates are not.
+- What OpenAI does with the data falls under the school's or DepEd's agreement with OpenAI.
+  The request is made with store=False. Check the account's data-retention settings yourself.
+- The model and its cost are chosen by the school (OPENAI_MODEL). Each draft costs one or two
+  requests (one more when the first answer fails validation).
+
+Validation and fallback
+- Hard checks (the draft is rejected): one entry per goal, only known evidence IDs, at least
+  one ID per item, ratings that agree with the computed Stage 11 status, no known identifiers,
+  and no unknown placeholders. The model gets one retry with the errors listed. After that, a
+  manual draft is saved instead.
+- The checks cannot prove each sentence is true. A cited ID can still be paraphrased wrongly.
+  Reviewers should hover the evidence chips and compare.
+- Any API problem (wrong key, unknown model, rate limit, timeout, network) also produces a
+  manual draft, with the reason shown.
+- Re-identification only turns "[LEARNER]" into the learner's first name. "[STAFF]" becomes
+  "the teacher" and "[SCHOOL]" becomes "the school".
+
+Rules and scope
+- One draft and at most one finalized evaluation per learner and school year. Finalized
+  evaluations are read-only. There are no amendments yet; discard the draft and start again.
+- The evaluation uses the ACTIVE IEP (the finalized IEP for the learner's current school year)
+  and the evidence recorded under it.
+- Prompt versions are files (app/prompts/year_end_evaluation/v1.md). Never edit a released
+  version: add v2.md and bump YEAR_END_PROMPT_VERSION in app/prompts/__init__.py.
+- No DOCX/PDF export of evaluations yet.
+- AUDIT LOGGING IS NOT DONE YET (Stage 14). Each evaluation records who created and who
+  finalized it, plus the full AI provenance. Edits are not logged.
 
 
 -------------------------------------------------------------------------------

@@ -480,6 +480,52 @@ Endpoints:
 - `GET /api/learners/{id}/timeline?types=&from=&to=`
 - `GET /api/progress/attention?status=`
 
+## Year-end evaluation
+
+The **Evaluations** tab on the learner profile holds one year-end evaluation per school year:
+- an overall summary;
+- a rating and narrative for each goal of the active IEP;
+- strengths;
+- recommendations for next year.
+
+**Write manually** is always available. It starts from a skeleton built from the year's
+evidence: per goal, the baseline, number of data points, first and last values, target and
+linked activities, plus a suggested rating from the progress status.
+
+**Generate with AI…** (optional, uses OpenAI):
+1. **Turn it on** in `Backend/.env` with `EVALUATION_AI_ENABLED=true`, `OPENAI_API_KEY=…` and
+   `OPENAI_MODEL=<model id>`. There is no default model, and the key stays on the server.
+2. **Preview:** staff see the **exact de-identified evidence package** first.
+   - Names, learner code, birth date, staff and team names, school name, emails, phone numbers
+     and calendar dates are removed. Dates become "week N" of the IEP.
+   - Every item has an evidence ID: `G1` goals, `F` findings, `P` data points, `A` activities,
+     `O` observations, `R` grades.
+   - If a known identifier slips through, sending is blocked.
+3. **Generate draft** sends the package with the versioned prompt
+   (`app/prompts/year_end_evaluation/v1.md`, version `year-end-v1`). The prompt's grounding
+   rules: use only the package, cite evidence IDs for every statement, invent nothing, and
+   keep each rating consistent with the computed goal status.
+4. **Validation:** the response must match a JSON schema, contain one entry per goal, cite only
+   known IDs, keep ratings consistent, and contain no identifiers.
+   - If it fails, the model is asked once more with the errors listed.
+   - If that also fails, or the API is unavailable, a **manual draft** is saved instead and the
+     reason is shown.
+5. **Saved provenance:** each AI draft stores the model id, prompt version, evidence IDs, the
+   evidence hash, the exact package sent and the raw (de-identified) response.
+
+**Who can do what:** the SNED Coordinator and assigned Teachers create and edit drafts; only the
+Coordinator **finalizes**, after which the evaluation is read-only. The School Head can view.
+
+To test the AI path once, set the three settings, open **Generate with AI…** on a learner with
+a finalized IEP and progress data, check the preview and generate. Then set a wrong key and
+confirm it falls back to a manual draft.
+
+Endpoints:
+- `GET /api/learners/{id}/evaluations`, `GET /api/learners/{id}/evaluations/preview`
+- `POST /api/learners/{id}/evaluations/generate` `{evidence_hash}`,
+  `POST /api/learners/{id}/evaluations/manual`
+- `GET/PATCH/DELETE /api/evaluations/{id}`, `POST /api/evaluations/{id}/finalize`
+
 ## Validation
 
 ```powershell

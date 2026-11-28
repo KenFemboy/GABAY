@@ -278,8 +278,8 @@ def test_summary_lists_every_module(client, coordinator_headers, create_learner)
     body = response.json()
     assert body["learner"]["id"] == learner["id"]
     assert list(body["modules"]) == MODULES
-    # Built so far: assessments (4), IEP (9), ILAW (10), progress (11).
-    built = {"assessments", "iep", "ilaw", "progress"}
+    # All modules are built: assessments (4), IEP (9), ILAW (10), progress (11), evaluations (12).
+    built = {"assessments", "iep", "ilaw", "progress", "evaluations"}
     for name, module in body["modules"].items():
         expected_available = name in built
         assert module == {

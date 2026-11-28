@@ -1,6 +1,7 @@
 """Import every model here so Alembic autogenerate sees the full metadata."""
 
 from app.models.assessment import Assessment, AssessmentType, Document, ProcessingStatus
+from app.models.evaluation import Evaluation, EvaluationSource, EvaluationStatus, GoalRating
 from app.models.extraction import (
     ExtractionFinding,
     ExtractionMethod,
@@ -37,12 +38,16 @@ __all__ = [
     "Assessment",
     "AssessmentType",
     "Document",
+    "Evaluation",
+    "EvaluationSource",
+    "EvaluationStatus",
     "ExtractionFinding",
     "ExtractionMethod",
     "ExtractionStatus",
     "ExtractionVersion",
     "FindingOrigin",
     "Goal",
+    "GoalRating",
     "GoalDomain",
     "GoalEmbedding",
     "GoalRecommendation",

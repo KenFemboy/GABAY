@@ -10,6 +10,7 @@ import AssessmentsTab from '../assessments/AssessmentsTab'
 import IepTab from '../iep/IepTab'
 import IlawTab from '../ilaw/IlawTab'
 import ProgressTab from '../progress/ProgressTab'
+import EvaluationsTab from '../evaluations/EvaluationsTab'
 import AssignmentsPanel from './AssignmentsPanel'
 import { GRADE_LABELS, LEARNER_EDITOR_ROLES, PROFILE_TABS, SEX_LABELS } from './constants'
 import LearnerForm from './LearnerForm'
@@ -190,6 +191,8 @@ function LearnerProfile({ learnerId }) {
             <IlawTab learner={learner} onChanged={reloadSummary} />
           ) : activeTab === 'progress' ? (
             <ProgressTab learner={learner} onChanged={reloadSummary} />
+          ) : activeTab === 'evaluations' ? (
+            <EvaluationsTab learner={learner} onChanged={reloadSummary} />
           ) : (
             <ModuleTab
               label={PROFILE_TABS.find((t) => t.key === activeTab).label}

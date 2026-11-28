@@ -1,0 +1,12 @@
+GABAY - Notes
+=============
+
+- Make sure to PAY FOR THE OPENAI API before enabling AI-generated evaluations
+  (EVALUATION_AI_ENABLED=true in Backend/.env).
+    * The API is billed separately from ChatGPT. A ChatGPT Plus subscription does NOT include it.
+    * Add a payment method or prepaid credit at platform.openai.com -> Settings -> Billing, and
+      check that the project's monthly limit is not 0.
+    * Without credit, every request fails with "OpenAI rate limit or quota reached", and GABAY
+      saves a manual draft instead.
+    * If the API key was created before billing was set up, create a new key and put it in
+      Backend/.env (OPENAI_API_KEY), then restart the API.

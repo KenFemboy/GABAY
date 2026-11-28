@@ -11,6 +11,7 @@ from app.db.session import engine
 from app.routers import (
     assessments,
     auth,
+    evaluations,
     extractions,
     files,
     goals,
@@ -85,6 +86,7 @@ app.include_router(matching.router)
 app.include_router(iep.router)
 app.include_router(ilaw.router)
 app.include_router(progress.router)
+app.include_router(evaluations.router)
 
 
 @app.get("/api/health")
@@ -118,6 +120,10 @@ def config_status() -> dict:
         "storage_backend": settings.storage_backend,
         **tesseract_status(settings),
         "pgvector": pgvector_version(),
+        "evaluation_ai": {
+            "enabled": settings.evaluation_ai_enabled,
+            "configured": settings.evaluation_ai_configured,
+        },
     }
 
 

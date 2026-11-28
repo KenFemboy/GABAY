@@ -80,3 +80,5 @@ require_goal_managers = require_roles(Role.SNED_COORDINATOR)
 # IEP (Stage 9): drafts are edited by require_assessment_writers; only the Coordinator
 # finalizes and starts amendments.
 require_iep_finalizers = require_roles(Role.SNED_COORDINATOR)
+# Year-end evaluation (Stage 12): only the Coordinator finalizes.
+require_evaluation_finalizers = require_roles(Role.SNED_COORDINATOR)

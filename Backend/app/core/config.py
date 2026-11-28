@@ -92,6 +92,17 @@ class Settings(BaseSettings):
     ilaw_top_k: int = Field(default=3, ge=1, le=10, validation_alias="ILAW_TOP_K")
     ilaw_min_score: float = Field(default=0.35, ge=0, le=1, validation_alias="ILAW_MIN_SCORE")
 
+    # Year-end evaluation (Stage 12). AI drafting is OFF unless enabled AND a key and
+    # model are set. The key is backend-only and never logged or returned.
+    evaluation_ai_enabled: bool = Field(default=False, validation_alias="EVALUATION_AI_ENABLED")
+    openai_api_key: str = Field(default="", validation_alias="OPENAI_API_KEY")
+    openai_model: str = Field(default="", validation_alias="OPENAI_MODEL")
+    openai_timeout_seconds: float = Field(default=60, gt=0, le=600, validation_alias="OPENAI_TIMEOUT_SECONDS")
+
+    @property
+    def evaluation_ai_configured(self) -> bool:
+        return bool(self.openai_api_key and self.openai_model)
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
